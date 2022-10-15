@@ -32,12 +32,6 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	user.Login = r.Form.Get("login")
 	user.Password = r.Form.Get("password")
 
-	//err = auth.CheckLoginAndPassword(user)
-	//if err != nil {
-	//	http.Error(w, fmt.Sprintf("register error: %s", err), http.StatusConflict)
-	//	return
-	//}
-
 	err = app.userStorage.RegisterUser(user)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserExists) {
@@ -48,7 +42,24 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	w.WriteHeader(http.StatusOK)
+
+	var authDetails auth.Authentication
+	authDetails.Login = user.Login
+	authDetails.Password = user.Password
+	token, err := app.userStorage.CheckUserAuth(authDetails)
+	if err != nil {
+		if errors.Is(err, storage.ErrInvalidCredentials) {
+			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusUnauthorized)
+			return
+		} else {
+			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(token)
+	//w.WriteHeader(http.StatusOK)
 }
 
 func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
