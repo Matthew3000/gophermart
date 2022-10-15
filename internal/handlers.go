@@ -55,8 +55,9 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("WWW-Authenticate", "JWT realm=\"api\"")
 	json.NewEncoder(w).Encode(token)
-	//w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
