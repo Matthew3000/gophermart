@@ -74,7 +74,7 @@ func CheckLoginAndPassword(user User) error {
 
 	loginRegex := regexp.MustCompile(`^[\s\S]{6,}$`)
 	if !loginRegex.MatchString(user.Login) {
-		return fmt.Errorf("login should be at least 8 characters")
+		return fmt.Errorf("login should be at least 6 characters")
 	}
 	passwordRegex := regexp.MustCompile(`^[\s\S]{8,}$`)
 	if !passwordRegex.MatchString(user.Password) {
