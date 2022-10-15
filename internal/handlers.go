@@ -49,6 +49,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	token, err := app.userStorage.CheckUserAuth(authDetails)
 	if err != nil {
 		if errors.Is(err, storage.ErrInvalidCredentials) {
+			log.Printf("user: %s, password: %s", authDetails.Login, authDetails.Password)
 			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusUnauthorized)
 			return
 		} else {
