@@ -19,8 +19,7 @@ func GenerateJWT(login string) (string, error) {
 
 	tokenString, err := token.SignedString(mySigningKey)
 	if err != nil {
-		fmt.Errorf("jwt generate: %s", err.Error())
-		return "", err
+		return "", fmt.Errorf("jwt generate: %s", err)
 	}
 
 	return tokenString, nil
@@ -30,7 +29,7 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Header["Token"] == nil {
-			http.Error(w, fmt.Sprintf("no token found"), http.StatusBadRequest)
+			http.Error(w, "no token found", http.StatusBadRequest)
 			return
 		}
 
@@ -44,7 +43,7 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil {
-			http.Error(w, fmt.Sprintf("token has expired"), http.StatusUnauthorized)
+			http.Error(w, fmt.Sprintf("token error: %s", err), http.StatusUnauthorized)
 			return
 		}
 
