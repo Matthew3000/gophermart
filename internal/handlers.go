@@ -98,5 +98,5 @@ func (app *App) handleWithdrawInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) handleDefault(w http.ResponseWriter, r *http.Request) {
-
+	http.Redirect(w, r, "https://www.youtube.com/watch?v=dQw4w9WgXcQ", http.StatusTemporaryRedirect)
 }
