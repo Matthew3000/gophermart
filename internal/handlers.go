@@ -22,15 +22,11 @@ import (
 
 func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var user auth.User
-
-	err := r.ParseForm()
+	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		log.Print(err)
 		http.Error(w, fmt.Sprintf("parse form error: %s", err), http.StatusBadRequest)
 		return
 	}
-	user.Login = r.Form.Get("login")
-	user.Password = r.Form.Get("password")
 
 	err = app.userStorage.RegisterUser(user)
 	if err != nil {
@@ -65,14 +61,11 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var authDetails auth.Authentication
-
-	err := r.ParseForm()
+	err := json.NewDecoder(r.Body).Decode(&authDetails)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("parse form error: %s", err), http.StatusBadRequest)
 		return
 	}
-	authDetails.Login = r.Form.Get("login")
-	authDetails.Password = r.Form.Get("password")
 
 	token, err := app.userStorage.CheckUserAuth(authDetails)
 	if err != nil {
