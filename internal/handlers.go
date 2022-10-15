@@ -32,11 +32,11 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	user.Login = r.Form.Get("login")
 	user.Password = r.Form.Get("password")
 
-	err = auth.CheckLoginAndPassword(user)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("register error: %s", err), http.StatusConflict)
-		return
-	}
+	//err = auth.CheckLoginAndPassword(user)
+	//if err != nil {
+	//	http.Error(w, fmt.Sprintf("register error: %s", err), http.StatusConflict)
+	//	return
+	//}
 
 	err = app.userStorage.RegisterUser(user)
 	if err != nil {
@@ -48,7 +48,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
