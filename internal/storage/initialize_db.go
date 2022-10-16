@@ -3,7 +3,7 @@ package storage
 import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"gophermart/internal/auth"
+	"gophermart/internal/service"
 	"log"
 )
 
@@ -32,5 +32,6 @@ func NewUserStorage(DatabaseURL string) *DBStorage {
 }
 
 func InitializeTables(connection *gorm.DB) {
-	connection.AutoMigrate(auth.User{})
+	connection.AutoMigrate(service.User{})
+	connection.AutoMigrate(service.Order{})
 }

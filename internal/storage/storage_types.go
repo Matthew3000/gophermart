@@ -2,12 +2,13 @@ package storage
 
 import (
 	"errors"
-	"gophermart/internal/auth"
+	"gophermart/internal/service"
 )
 
 type UserStorage interface {
-	CheckUserAuth(authDetails auth.Authentication) (auth.Token, error)
-	RegisterUser(user auth.User) error
+	CheckUserAuth(authDetails service.Authentication) (service.Token, error)
+	RegisterUser(user service.User) error
+	PutOrder(order service.Order) error
 }
 
 var (

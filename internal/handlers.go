@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gophermart/internal/auth"
+	"github.com/theplant/luhn"
+	"gophermart/internal/service"
 	"gophermart/internal/storage"
+	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 /*
@@ -21,7 +24,7 @@ import (
 */
 
 func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
-	var user auth.User
+	var user service.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("parse form error: %s", err), http.StatusBadRequest)
@@ -39,7 +42,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var authDetails auth.Authentication
+	var authDetails service.Authentication
 	authDetails.Login = user.Login
 	authDetails.Password = user.Password
 	token, err := app.userStorage.CheckUserAuth(authDetails)
@@ -61,7 +64,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
-	var authDetails auth.Authentication
+	var authDetails service.Authentication
 	err := json.NewDecoder(r.Body).Decode(&authDetails)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("parse form error: %s", err), http.StatusBadRequest)
@@ -83,8 +86,29 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(token)
 }
 
-func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
+func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request, user service.User) {
+	value, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("handle post: read request body: %v\n", err)
+		http.Error(w, "couldn't read body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
 
+	orderID, err := strconv.Atoi(string(value))
+	if !luhn.Valid(orderID) {
+		http.Error(w, "order number is invalid", http.StatusUnprocessableEntity)
+		return
+	}
+
+	var order service.Order
+	order.OrderId = orderID
+	order.Login = user.Login
+	err = app.userStorage.PutOrder(order)
+	if err != nil {
+
+	}
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (app *App) handleGetOrders(w http.ResponseWriter, r *http.Request) {

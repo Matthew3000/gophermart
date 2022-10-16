@@ -1,13 +1,20 @@
-package auth
+package service
 
 import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"net/http"
 	"regexp"
 	"time"
 )
+
+type JWTToken struct {
+	Login string `json:"login"`
+	Auth  bool   `json:"authorized"`
+	jwt.StandardClaims
+}
 
 func GenerateJWT(login string) (string, error) {
 	var mySigningKey = []byte(secretKey)
@@ -27,7 +34,7 @@ func GenerateJWT(login string) (string, error) {
 
 func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		log.Printf("is authorized")
 		if r.Header["Token"] == nil {
 			http.Error(w, "no token found", http.StatusBadRequest)
 			return
@@ -47,7 +54,9 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims, ok := token.Claims.(*JWTToken); ok && token.Valid {
+			log.Printf(claims.Login)
+			r.Header.Set("login", claims.Login)
 			handler.ServeHTTP(w, r)
 		}
 		http.Redirect(w, r, "/login", http.StatusUnauthorized)
