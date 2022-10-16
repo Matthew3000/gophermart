@@ -79,6 +79,6 @@ func (dbStorage DBStorage) GetOrderStatus(order service.Order) (service.Order, e
 	}
 	order.Status = orderResponse.Status
 	order.Accrual = orderResponse.Accrual
-	log.Printf("order status: %s, order accrual: %s", order.Status, order.Accrual)
+	log.Printf("order status: %s, order accrual: %d", order.Status, order.Accrual)
 	return order, nil
 }

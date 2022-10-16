@@ -9,6 +9,7 @@ type UserStorage interface {
 	CheckUserAuth(authDetails service.Authentication) error
 	RegisterUser(user service.User) error
 	PutOrder(order service.Order) error
+	GetOrderStatus(order service.Order) (service.Order, error)
 }
 
 var (
