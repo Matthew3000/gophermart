@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/sessions"
 	"github.com/theplant/luhn"
 	"gophermart/internal/service"
 	"gophermart/internal/storage"
@@ -23,8 +22,6 @@ import (
    POST /api/user/balance/withdraw — запрос на списание баллов с накопительного счёта в счёт оплаты нового заказа;
    GET /api/user/balance/withdrawals — получение информации о выводе средств с накопительного счёта пользователем.
 */
-
-var CookieStorage = sessions.NewCookieStore([]byte("secret_key"))
 
 func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var user service.User
@@ -65,7 +62,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	//w.WriteHeader(http.StatusOK)
 	//json.NewEncoder(w).Encode(token)
 
-	session, _ := CookieStorage.Get(r, "session.id")
+	session, _ := storage.CookieStorage.Get(r, "session.id")
 	session.Values["authenticated"] = true
 	// saves all sessions used during the current request
 	session.Save(r, w)
@@ -91,7 +88,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session, _ := CookieStorage.Get(r, "session.id")
+	session, _ := storage.CookieStorage.Get(r, "session.id")
 	session.Values["authenticated"] = true
 	// saves all sessions used during the current request
 	session.Save(r, w)

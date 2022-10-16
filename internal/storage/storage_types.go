@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"github.com/gorilla/sessions"
 	"gophermart/internal/service"
 )
 
@@ -15,3 +16,5 @@ var (
 	ErrUserExists         = errors.New("user already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 )
+
+var CookieStorage = sessions.NewCookieStore([]byte("secret_key"))

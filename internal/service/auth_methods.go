@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
-	"gophermart/internal/app"
+	"gophermart/internal/storage"
 	"net/http"
 	"regexp"
 	"time"
@@ -61,7 +61,7 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 		//	handler.ServeHTTP(w, r)
 		//}
 		//http.Redirect(w, r, "/login", http.StatusUnauthorized)
-		session, _ := app.CookieStorage.Get(r, "session.id")
+		session, _ := storage.CookieStorage.Get(r, "session.id")
 		authenticated := session.Values["authenticated"]
 		if authenticated != nil && authenticated != false {
 			handler.ServeHTTP(w, r)
