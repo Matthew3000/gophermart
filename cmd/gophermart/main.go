@@ -19,6 +19,7 @@ func main() {
 	}
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "File Storage Path")
 	flag.StringVar(&cfg.ServerAddress, "a", cfg.ServerAddress, "Server address")
+	flag.StringVar(&cfg.AccrualAddress, "r", cfg.AccrualAddress, "Accrual address")
 	flag.Parse()
 
 	fmt.Println(cfg.DatabaseDSN)
