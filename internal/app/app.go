@@ -4,7 +4,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"gophermart/internal/config"
-	"gophermart/internal/service"
 	"gophermart/internal/storage"
 	"gophermart/internal/tools"
 	"log"
@@ -37,11 +36,11 @@ func (app *App) Run() {
 
 	router.HandleFunc("/api/user/register", app.handleRegister).Methods(http.MethodPost)
 	router.HandleFunc("/api/user/login", app.handleLogin).Methods(http.MethodPost)
-	router.HandleFunc("/api/user/orders", service.IsAuthorized(app.handleUploadOrder)).Methods(http.MethodPost)
-	router.HandleFunc("/api/user/orders", service.IsAuthorized(app.handleGetOrders)).Methods(http.MethodGet)
-	router.HandleFunc("/api/user/balance", service.IsAuthorized(app.handleGetBalance)).Methods(http.MethodGet)
-	router.HandleFunc("/api/user/balance/withdraw", service.IsAuthorized(app.handleWithdraw)).Methods(http.MethodPost)
-	router.HandleFunc("/api/user/balance/withdrawals", service.IsAuthorized(app.handleWithdrawInfo)).Methods(http.MethodGet)
+	router.HandleFunc("/api/user/orders", app.IsAuthorized(app.handleUploadOrder)).Methods(http.MethodPost)
+	router.HandleFunc("/api/user/orders", app.IsAuthorized(app.handleGetOrders)).Methods(http.MethodGet)
+	router.HandleFunc("/api/user/balance", app.IsAuthorized(app.handleGetBalance)).Methods(http.MethodGet)
+	router.HandleFunc("/api/user/balance/withdraw", app.IsAuthorized(app.handleWithdraw)).Methods(http.MethodPost)
+	router.HandleFunc("/api/user/balance/withdrawals", app.IsAuthorized(app.handleWithdrawInfo)).Methods(http.MethodGet)
 
 	router.HandleFunc("/", app.handleDefault)
 
