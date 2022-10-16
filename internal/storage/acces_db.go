@@ -90,6 +90,6 @@ func (dbStorage DBStorage) GetOrderStatus(order service.Order, accrualAddr strin
 	}
 	order.Status = orderResponse.Status
 	order.Accrual = orderResponse.Accrual
-	log.Printf("order status: %s, order accrual: %d", order.Status, order.Accrual)
+	log.Printf("order status: %s, order accrual: %f", order.Status, order.Accrual)
 	return order, nil
 }
