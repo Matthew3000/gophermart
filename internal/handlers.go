@@ -95,18 +95,18 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	orderID, err := strconv.Atoi(string(value))
+	orderID, _ := strconv.Atoi(string(value))
 	if !luhn.Valid(orderID) {
 		http.Error(w, "order number is invalid", http.StatusUnprocessableEntity)
 		return
 	}
 
 	var order service.Order
-	order.OrderId = orderID
+	order.OrderID = orderID
 	//order.Login = user.Login
 	err = app.userStorage.PutOrder(order)
 	if err != nil {
-
+		return
 	}
 	w.WriteHeader(http.StatusAccepted)
 }
