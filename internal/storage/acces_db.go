@@ -76,10 +76,10 @@ func (dbStorage DBStorage) GetOrderStatus(order service.Order, serverAddr string
 
 	value, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Printf("request body is  %s", value)
 		log.Printf("read request body err: %s", err)
 		return order, err
 	}
+	log.Printf("request body is  %s", value)
 
 	var orderResponse service.OrderAccrualResponse
 	if err := json.NewDecoder(response.Body).Decode(&orderResponse); err != nil {
