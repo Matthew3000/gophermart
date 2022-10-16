@@ -58,7 +58,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Authorization", "Bearer Token")
+	w.Header().Set("Authorization", "Bearer "+fmt.Sprintf("%s", token))
 	//w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(token)
 }
