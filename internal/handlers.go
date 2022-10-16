@@ -45,7 +45,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var authDetails service.Authentication
 	authDetails.Login = user.Login
 	authDetails.Password = user.Password
-	token, err := app.userStorage.CheckUserAuth(authDetails)
+	_, err = app.userStorage.CheckUserAuth(authDetails)
 	if err != nil {
 		if errors.Is(err, storage.ErrInvalidCredentials) {
 			log.Printf("user: %s, password: %s", authDetails.Login, authDetails.Password)
@@ -57,10 +57,16 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Authorization", "Bearer "+fmt.Sprintf("%s", token))
+	//w.Header().Set("Content-Type", "application/json")
+	//w.Header().Set("Authorization", "Bearer "+fmt.Sprintf("%s", token))
 	//w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(token)
+	//json.NewEncoder(w).Encode(token)
+
+	session, _ := CookieStorage.Get(r, "session.id")
+	session.Values["authenticated"] = true
+	// saves all sessions used during the current request
+	session.Save(r, w)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +77,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := app.userStorage.CheckUserAuth(authDetails)
+	_, err = app.userStorage.CheckUserAuth(authDetails)
 	if err != nil {
 		if errors.Is(err, storage.ErrInvalidCredentials) {
 			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusUnauthorized)
@@ -82,8 +88,14 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(token)
+	session, _ := CookieStorage.Get(r, "session.id")
+	session.Values["authenticated"] = true
+	// saves all sessions used during the current request
+	session.Save(r, w)
+	w.WriteHeader(http.StatusOK)
+
+	//w.Header().Set("Content-Type", "application/json")
+	//json.NewEncoder(w).Encode(token)
 }
 
 func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {

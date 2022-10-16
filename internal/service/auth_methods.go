@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
-	"log"
+	app "gophermart/internal"
 	"net/http"
 	"regexp"
 	"time"
@@ -34,30 +34,36 @@ func GenerateJWT(login string) (string, error) {
 
 func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Header["Token"] == nil {
-			log.Printf("no token found")
-			http.Error(w, "no token found", http.StatusBadRequest)
-			return
-		}
-
-		var mySigningKey = []byte(secretKey)
-
-		token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("parsing token error")
-			}
-			return mySigningKey, nil
-		})
-
-		if err != nil {
-			log.Printf("token error: %s", err)
-			http.Error(w, fmt.Sprintf("token error: %s", err), http.StatusUnauthorized)
-			return
-		}
-
-		if claims, ok := token.Claims.(*JWTToken); ok && token.Valid {
-			log.Printf(claims.Login)
-			r.Header.Set("login", claims.Login)
+		//if r.Header["Token"] == nil {
+		//	log.Printf("no token found")
+		//	http.Error(w, "no token found", http.StatusBadRequest)
+		//	return
+		//}
+		//
+		//var mySigningKey = []byte(secretKey)
+		//
+		//token, err := jwt.Parse(r.Header["Token"][0], func(token *jwt.Token) (interface{}, error) {
+		//	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		//		return nil, fmt.Errorf("parsing token error")
+		//	}
+		//	return mySigningKey, nil
+		//})
+		//
+		//if err != nil {
+		//	log.Printf("token error: %s", err)
+		//	http.Error(w, fmt.Sprintf("token error: %s", err), http.StatusUnauthorized)
+		//	return
+		//}
+		//
+		//if claims, ok := token.Claims.(*JWTToken); ok && token.Valid {
+		//	log.Printf(claims.Login)
+		//	r.Header.Set("login", claims.Login)
+		//	handler.ServeHTTP(w, r)
+		//}
+		//http.Redirect(w, r, "/login", http.StatusUnauthorized)
+		session, _ := app.CookieStorage.Get(r, "session.id")
+		authenticated := session.Values["authenticated"]
+		if authenticated != nil && authenticated != false {
 			handler.ServeHTTP(w, r)
 		}
 		http.Redirect(w, r, "/login", http.StatusUnauthorized)
