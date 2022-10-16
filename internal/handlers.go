@@ -86,7 +86,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(token)
 }
 
-func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request, user service.User) {
+func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 	value, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("handle post: read request body: %v\n", err)
@@ -103,7 +103,7 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request, user s
 
 	var order service.Order
 	order.OrderId = orderID
-	order.Login = user.Login
+	//order.Login = user.Login
 	err = app.userStorage.PutOrder(order)
 	if err != nil {
 
