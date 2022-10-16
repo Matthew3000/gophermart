@@ -34,8 +34,8 @@ func GenerateJWT(login string) (string, error) {
 
 func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("is authorized")
 		if r.Header["Token"] == nil {
+			log.Printf("no token found")
 			http.Error(w, "no token found", http.StatusBadRequest)
 			return
 		}
@@ -50,6 +50,7 @@ func IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil {
+			log.Printf("token error: %s", err)
 			http.Error(w, fmt.Sprintf("token error: %s", err), http.StatusUnauthorized)
 			return
 		}
