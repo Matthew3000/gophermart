@@ -62,7 +62,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	//w.WriteHeader(http.StatusOK)
 	//json.NewEncoder(w).Encode(token)
 
-	session, _ := storage.CookieStorage.Get(r, "session.id")
+	session, _ := service.CookieStorage.Get(r, "session.id")
 	session.Values["authenticated"] = true
 	// saves all sessions used during the current request
 	session.Save(r, w)
@@ -88,7 +88,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session, _ := storage.CookieStorage.Get(r, "session.id")
+	session, _ := service.CookieStorage.Get(r, "session.id")
 	session.Values["authenticated"] = true
 	// saves all sessions used during the current request
 	session.Save(r, w)
