@@ -64,7 +64,7 @@ func (dbStorage DBStorage) PutOrder(order service.Order, accrualAddr string) err
 }
 
 func (dbStorage DBStorage) GetOrderStatus(order service.Order, accrualAddr string) (service.Order, error) {
-	getStatusURL := "http://" + accrualAddr + "/api/orders/" + order.OrderID
+	getStatusURL := accrualAddr + "/api/orders/" + order.OrderID
 	log.Printf("get order status from: %s", getStatusURL)
 
 	response, err := http.Get(getStatusURL)
