@@ -12,6 +12,8 @@ type UserStorage interface {
 }
 
 var (
-	ErrUserExists         = errors.New("user already exists")
-	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrUserExists            = errors.New("user already exists")
+	ErrInvalidCredentials    = errors.New("invalid credentials")
+	ErrAlreadyExists         = errors.New("this order is already uploaded")
+	ErrUploadedByAnotherUser = errors.New("this order is uploaded by another user")
 )

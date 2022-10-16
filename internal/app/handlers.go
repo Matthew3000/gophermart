@@ -29,6 +29,7 @@ func (app *App) IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 		authenticated := session.Values["authenticated"]
 		if authenticated != nil && authenticated != false {
 			handler.ServeHTTP(w, r)
+			return
 		}
 		http.Redirect(w, r, "/login", http.StatusUnauthorized)
 	}
@@ -112,7 +113,7 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 
 	orderID, _ := strconv.Atoi(string(value))
 	if !luhn.Valid(orderID) {
-		log.Printf("handle Upload Order: order number is invalid")
+		log.Printf("handle upload order: order number is invalid")
 		http.Error(w, "order number is invalid", http.StatusUnprocessableEntity)
 		return
 	}
@@ -125,6 +126,14 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s", order.Login)
 	err = app.userStorage.PutOrder(order)
 	if err != nil {
+		log.Printf("handle upload order: %s", err)
+		if errors.Is(err, storage.ErrAlreadyExists) {
+			http.Error(w, fmt.Sprint(err), http.StatusOK)
+		} else if errors.Is(err, storage.ErrUploadedByAnotherUser) {
+			http.Error(w, fmt.Sprint(err), http.StatusConflict)
+		} else {
+			http.Error(w, fmt.Sprint(err), http.StatusUnprocessableEntity)
+		}
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
