@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"gophermart/internal/service"
+	"io"
 	"log"
 	"net/http"
 )
@@ -63,12 +64,22 @@ func (dbStorage DBStorage) PutOrder(order service.Order, serverAddr string) erro
 }
 
 func (dbStorage DBStorage) GetOrderStatus(order service.Order, serverAddr string) (service.Order, error) {
-	response, err := http.Get("http://" + serverAddr + "/api/orders/" + order.OrderID)
+	getStatusURL := "http://" + serverAddr + "/api/orders/" + order.OrderID
+	log.Printf("get order status from: %s", getStatusURL)
+
+	response, err := http.Get(getStatusURL)
 	if err != nil {
 		log.Printf("get order status: %s", err)
 		return order, err
 	}
 	defer response.Body.Close()
+
+	value, err := io.ReadAll(response.Body)
+	if err != nil {
+		log.Printf("request body is  %s", value)
+		log.Printf("read request body err: %s", err)
+		return order, err
+	}
 
 	var orderResponse service.OrderAccrualResponse
 	if err := json.NewDecoder(response.Body).Decode(&orderResponse); err != nil {
