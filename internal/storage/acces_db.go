@@ -41,12 +41,12 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 
 func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	var checkingOrder service.Order
-	dbStorage.db.Where("login  = 	?  AND orderID = ?", order.Login, order.OrderID).First(&checkingOrder)
-	if checkingOrder.Login == "" {
+	dbStorage.db.Where("login  = 	?  AND order_id = ?", order.Login, order.OrderID).First(&checkingOrder)
+	if checkingOrder.Login != "" {
 		return ErrAlreadyExists
 	}
-	dbStorage.db.Where("orderID = ?", order.OrderID).First(&checkingOrder)
-	if checkingOrder.Login == "" {
+	dbStorage.db.Where("order_id = ?", order.OrderID).First(&checkingOrder)
+	if checkingOrder.Login != "" {
 		return ErrUploadedByAnotherUser
 	}
 	dbStorage.db.Create(&order)
