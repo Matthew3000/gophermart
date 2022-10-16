@@ -136,6 +136,7 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	w.WriteHeader(http.StatusAccepted)
 }
 

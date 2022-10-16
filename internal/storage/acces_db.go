@@ -1,8 +1,12 @@
 package storage
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"gophermart/internal/service"
+	"log"
+	"net/http"
 )
 
 func (dbStorage DBStorage) RegisterUser(user service.User) error {
@@ -49,6 +53,32 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	if checkingOrder.Login != "" {
 		return ErrUploadedByAnotherUser
 	}
+	var err error
+	order, err = dbStorage.GetOrderStatus(order)
+	if err != nil {
+		return err
+	}
 	dbStorage.db.Create(&order)
 	return nil
+}
+
+func (dbStorage DBStorage) GetOrderStatus(order service.Order) (service.Order, error) {
+	response, err := http.Get("/api/orders/" + order.OrderID)
+	if err != nil {
+		log.Printf("get order status: %s", err)
+		return order, err
+	}
+
+	var orderResponse service.OrderAccrualResponse
+	if err := json.NewDecoder(response.Body).Decode(&orderResponse); err != nil {
+		log.Printf("json encode url: %v\n", err)
+		return order, err
+	}
+	if orderResponse.OrderID == "" {
+		return order, errors.New("empty JSON")
+	}
+	order.Status = orderResponse.Status
+	order.Accrual = orderResponse.Accrual
+	log.Printf("order status: %s, order accrual: %s", order.Status, order.Accrual)
+	return order, nil
 }
