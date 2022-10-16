@@ -7,5 +7,5 @@ import (
 type Order struct {
 	gorm.Model
 	Login   string `gorm:"unique" json:"login"`
-	OrderID int    `gorm:"unique" json:"order_id"`
+	OrderID string `gorm:"unique" json:"order_id"`
 }

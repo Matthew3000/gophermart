@@ -70,6 +70,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	session.Values["authenticated"] = true
+	session.Values["login"] = user.Login
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
 }
@@ -95,6 +96,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	session.Values["authenticated"] = true
+	session.Values["login"] = authDetails.Login
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
 }
@@ -116,8 +118,11 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var order service.Order
-	order.OrderID = orderID
-	//order.Login = user.Login
+	order.OrderID = string(orderID)
+
+	session, _ := app.cookieStorage.Get(r, "session.id")
+	order.Login = session.Values["login"].(string)
+	log.Printf("%s", order.Login)
 	err = app.userStorage.PutOrder(order)
 	if err != nil {
 		return
