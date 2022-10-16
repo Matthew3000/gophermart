@@ -72,7 +72,8 @@ func (dbStorage DBStorage) GetOrderStatus(order service.Order, serverAddr string
 
 	var orderResponse service.OrderAccrualResponse
 	if err := json.NewDecoder(response.Body).Decode(&orderResponse); err != nil {
-		log.Printf("json encode url: %v\n", err)
+		log.Printf("json response body: %s", response.Body)
+		log.Printf("json decode order accrual: %s", err)
 		return order, err
 	}
 	if orderResponse.OrderID == "" {
