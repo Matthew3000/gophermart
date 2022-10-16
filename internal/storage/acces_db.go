@@ -43,7 +43,7 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 	return nil
 }
 
-func (dbStorage DBStorage) PutOrder(order service.Order) error {
+func (dbStorage DBStorage) PutOrder(order service.Order, serverAddr string) error {
 	var checkingOrder service.Order
 	dbStorage.db.Where("login  = 	?  AND order_id = ?", order.Login, order.OrderID).First(&checkingOrder)
 	if checkingOrder.Login != "" {
@@ -54,7 +54,7 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 		return ErrUploadedByAnotherUser
 	}
 	var err error
-	order, err = dbStorage.GetOrderStatus(order)
+	order, err = dbStorage.GetOrderStatus(order, serverAddr)
 	if err != nil {
 		return err
 	}
@@ -62,8 +62,8 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	return nil
 }
 
-func (dbStorage DBStorage) GetOrderStatus(order service.Order) (service.Order, error) {
-	response, err := http.Get("http://localhost:8080/api/orders/" + order.OrderID)
+func (dbStorage DBStorage) GetOrderStatus(order service.Order, serverAddr string) (service.Order, error) {
+	response, err := http.Get("http://" + serverAddr + "/api/orders/" + order.OrderID)
 	if err != nil {
 		log.Printf("get order status: %s", err)
 		return order, err

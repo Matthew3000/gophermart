@@ -8,8 +8,8 @@ import (
 type UserStorage interface {
 	CheckUserAuth(authDetails service.Authentication) error
 	RegisterUser(user service.User) error
-	PutOrder(order service.Order) error
-	GetOrderStatus(order service.Order) (service.Order, error)
+	PutOrder(order service.Order, serverAddr string) error
+	GetOrderStatus(order service.Order, serverAddr string) (service.Order, error)
 }
 
 var (
