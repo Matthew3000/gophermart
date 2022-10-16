@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
+	"github.com/gorilla/sessions"
 	"gophermart/internal/app"
 	"gophermart/internal/config"
+	"gophermart/internal/service"
 	"gophermart/internal/storage"
 	"log"
 )
@@ -22,6 +24,7 @@ func main() {
 	fmt.Println(cfg.DatabaseDSN)
 
 	userStorage := storage.NewUserStorage(cfg.DatabaseDSN)
-	var application = app.NewApp(cfg, userStorage)
+	cookieStorage := sessions.NewCookieStore([]byte(service.SecretKey))
+	var application = app.NewApp(cfg, userStorage, *cookieStorage)
 	application.Run()
 }

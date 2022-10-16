@@ -16,9 +16,4 @@ type Authentication struct {
 	Password string `json:"password"`
 }
 
-type Token struct {
-	Login       string `json:"login"`
-	TokenString string `json:"token"`
-}
-
-var secretKey = "watch?v=Qw4w9WgXcQ"
+var SecretKey = "watch?v=Qw4w9WgXcQ"

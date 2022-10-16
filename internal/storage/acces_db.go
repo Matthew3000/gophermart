@@ -25,27 +25,18 @@ func (dbStorage DBStorage) RegisterUser(user service.User) error {
 	return nil
 }
 
-func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) (service.Token, error) {
+func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) error {
 	var authUser service.User
-	var token service.Token
 
 	dbStorage.db.Where("login  = 	?", authDetails.Login).First(&authUser)
 	if authUser.Login == "" {
-		return token, ErrInvalidCredentials
+		return ErrInvalidCredentials
 	}
 
 	if !service.CheckPasswordHash(authDetails.Password, authUser.Password) {
-		return token, ErrInvalidCredentials
+		return ErrInvalidCredentials
 	}
-
-	validToken, err := service.GenerateJWT(authUser.Login)
-	if err != nil {
-		return token, fmt.Errorf("creating token: %s", err)
-	}
-
-	token.Login = authUser.Login
-	token.TokenString = validToken
-	return token, nil
+	return nil
 }
 
 func (dbStorage DBStorage) PutOrder(order service.Order) error {

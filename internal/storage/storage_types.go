@@ -6,7 +6,7 @@ import (
 )
 
 type UserStorage interface {
-	CheckUserAuth(authDetails service.Authentication) (service.Token, error)
+	CheckUserAuth(authDetails service.Authentication) error
 	RegisterUser(user service.User) error
 	PutOrder(order service.Order) error
 }

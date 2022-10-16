@@ -14,14 +14,25 @@ import (
 )
 
 /*
-   POST /api/user/register — регистрация пользователя;
-   POST /api/user/login — аутентификация пользователя;
-   POST /api/user/orders — загрузка пользователем номера заказа для расчёта;
-   GET /api/user/orders — получение списка загруженных пользователем номеров заказов, статусов их обработки и информации о начислениях;
-   GET /api/user/balance — получение текущего баланса счёта баллов лояльности пользователя;
-   POST /api/user/balance/withdraw — запрос на списание баллов с накопительного счёта в счёт оплаты нового заказа;
-   GET /api/user/balance/withdrawals — получение информации о выводе средств с накопительного счёта пользователем.
+POST /api/user/register — регистрация пользователя;
+POST /api/user/login — аутентификация пользователя;
+POST /api/user/orders — загрузка пользователем номера заказа для расчёта;
+GET /api/user/orders — получение списка загруженных пользователем номеров заказов, статусов их обработки и информации о начислениях;
+GET /api/user/balance — получение текущего баланса счёта баллов лояльности пользователя;
+POST /api/user/balance/withdraw — запрос на списание баллов с накопительного счёта в счёт оплаты нового заказа;
+GET /api/user/balance/withdrawals — получение информации о выводе средств с накопительного счёта пользователем.
 */
+
+func (app *App) IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		session, _ := app.cookieStorage.Get(r, "session.id")
+		authenticated := session.Values["authenticated"]
+		if authenticated != nil && authenticated != false {
+			handler.ServeHTTP(w, r)
+		}
+		http.Redirect(w, r, "/login", http.StatusUnauthorized)
+	}
+}
 
 func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var user service.User
@@ -45,7 +56,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var authDetails service.Authentication
 	authDetails.Login = user.Login
 	authDetails.Password = user.Password
-	_, err = app.userStorage.CheckUserAuth(authDetails)
+	err = app.userStorage.CheckUserAuth(authDetails)
 	if err != nil {
 		if errors.Is(err, storage.ErrInvalidCredentials) {
 			log.Printf("user: %s, password: %s", authDetails.Login, authDetails.Password)
@@ -57,14 +68,8 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//w.Header().Set("Content-Type", "application/json")
-	//w.Header().Set("Authorization", "Bearer "+fmt.Sprintf("%s", token))
-	//w.WriteHeader(http.StatusOK)
-	//json.NewEncoder(w).Encode(token)
-
-	session, _ := service.CookieStorage.Get(r, "session.id")
+	session, _ := app.cookieStorage.Get(r, "session.id")
 	session.Values["authenticated"] = true
-	// saves all sessions used during the current request
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
 }
@@ -77,7 +82,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = app.userStorage.CheckUserAuth(authDetails)
+	err = app.userStorage.CheckUserAuth(authDetails)
 	if err != nil {
 		if errors.Is(err, storage.ErrInvalidCredentials) {
 			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusUnauthorized)
@@ -88,14 +93,10 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	session, _ := service.CookieStorage.Get(r, "session.id")
+	session, _ := app.cookieStorage.Get(r, "session.id")
 	session.Values["authenticated"] = true
-	// saves all sessions used during the current request
 	session.Save(r, w)
 	w.WriteHeader(http.StatusOK)
-
-	//w.Header().Set("Content-Type", "application/json")
-	//json.NewEncoder(w).Encode(token)
 }
 
 func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {

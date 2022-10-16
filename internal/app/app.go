@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"gophermart/internal/config"
 	"gophermart/internal/service"
 	"gophermart/internal/storage"
@@ -21,17 +22,17 @@ import (
 */
 
 type App struct {
-	config      config.Config
-	userStorage storage.UserStorage
+	config        config.Config
+	userStorage   storage.UserStorage
+	cookieStorage sessions.CookieStore
 }
 
-func NewApp(cfg config.Config, userStorage storage.UserStorage) *App {
-	return &App{config: cfg, userStorage: userStorage}
+func NewApp(cfg config.Config, userStorage storage.UserStorage, cookieStorage sessions.CookieStore) *App {
+	return &App{config: cfg, userStorage: userStorage, cookieStorage: cookieStorage}
 }
 
 func (app *App) Run() {
 	router := mux.NewRouter()
-
 	router.Use(tools.GzipMiddleware)
 
 	router.HandleFunc("/api/user/register", app.handleRegister).Methods(http.MethodPost)
