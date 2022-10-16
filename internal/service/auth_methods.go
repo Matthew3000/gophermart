@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
-	app "gophermart/internal"
+	"gophermart/internal/app"
 	"net/http"
 	"regexp"
 	"time"

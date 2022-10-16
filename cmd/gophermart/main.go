@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/caarlos0/env/v6"
-	app "gophermart/internal"
+	"gophermart/internal/app"
 	"gophermart/internal/config"
 	"gophermart/internal/storage"
 	"log"

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/sessions"
 	"github.com/theplant/luhn"
 	"gophermart/internal/service"
 	"gophermart/internal/storage"
@@ -22,6 +23,8 @@ import (
    POST /api/user/balance/withdraw — запрос на списание баллов с накопительного счёта в счёт оплаты нового заказа;
    GET /api/user/balance/withdrawals — получение информации о выводе средств с накопительного счёта пользователем.
 */
+
+var CookieStorage = sessions.NewCookieStore([]byte("secret_key"))
 
 func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var user service.User
@@ -101,7 +104,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 	value, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("handle post: read request body: %v\n", err)
+		log.Printf("handle Upload Order: read request body: %v\n", err)
 		http.Error(w, "couldn't read body", http.StatusBadRequest)
 		return
 	}
@@ -109,6 +112,7 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 
 	orderID, _ := strconv.Atoi(string(value))
 	if !luhn.Valid(orderID) {
+		log.Printf("handle Upload Order: order number is invalid")
 		http.Error(w, "order number is invalid", http.StatusUnprocessableEntity)
 		return
 	}
