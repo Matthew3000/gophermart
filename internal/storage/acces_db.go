@@ -64,6 +64,7 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 
 func (dbStorage DBStorage) GetOrderStatus(order service.Order) (service.Order, error) {
 	response, err := http.Get("/api/orders/" + order.OrderID)
+	defer response.Body.Close()
 	if err != nil {
 		log.Printf("get order status: %s", err)
 		return order, err
