@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"gophermart/internal/service"
+	"io"
 	"log"
 	"net/http"
 )
@@ -73,12 +74,8 @@ func (dbStorage DBStorage) GetOrderStatus(order service.Order, accrualAddr strin
 	}
 	defer response.Body.Close()
 
-	//value, err := io.ReadAll(response.Body)
-	//if err != nil {
-	//	log.Printf("read response body err: %s", err)
-	//	return order, err
-	//}
-	//log.Printf("response body is  %s", value)
+	value, _ := io.ReadAll(response.Body)
+	log.Printf("response body is  %s", value)
 
 	var orderResponse service.OrderAccrualResponse
 	if err := json.NewDecoder(response.Body).Decode(&orderResponse); err != nil {
