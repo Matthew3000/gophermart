@@ -13,6 +13,8 @@ type UserStorage interface {
 	GetOrdersByLogin(login string) ([]service.Order, error)
 	GetBalanceByLogin(login string) (float32, error)
 	GetWithdrawnAmount(login string) (float32, error)
+	Withdraw(withdrawal service.Withdrawal) error
+	SetBalanceByLogin(login string, newBalance float32) error
 }
 
 var (

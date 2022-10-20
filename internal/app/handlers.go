@@ -106,7 +106,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 	value, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("handle Upload Order: read request body: %v\n", err)
+		log.Printf("handle Upload Order: read request body: %s", err)
 		http.Error(w, "couldn't read body", http.StatusBadRequest)
 		return
 	}
@@ -182,7 +182,48 @@ func (app *App) handleGetBalance(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
+	var withdrawal service.Withdrawal
 
+	session, _ := app.cookieStorage.Get(r, "session.id")
+	withdrawal.Login = session.Values["login"].(string)
+
+	err := json.NewDecoder(r.Body).Decode(&withdrawal)
+	if err != nil {
+		log.Printf("handle withdraw: read request body: %s", err)
+		http.Error(w, "couldn't read body", http.StatusBadRequest)
+		return
+	}
+
+	orderID, _ := strconv.Atoi(withdrawal.OrderID)
+	if !luhn.Valid(orderID) {
+		log.Printf("handle upload order: order number is invalid")
+		http.Error(w, "order number is invalid", http.StatusUnprocessableEntity)
+		return
+	}
+
+	currentBalance, err := app.userStorage.GetBalanceByLogin(withdrawal.Login)
+	if err != nil {
+		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+		return
+	}
+
+	newBalance := currentBalance - withdrawal.Amount
+	if newBalance >= 0 {
+		err = app.userStorage.Withdraw(withdrawal)
+		if err != nil {
+			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+			return
+		}
+
+		err = app.userStorage.SetBalanceByLogin(withdrawal.Login, newBalance)
+		if err != nil {
+			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		w.WriteHeader(http.StatusPaymentRequired)
+		return
+	}
 }
 
 func (app *App) handleWithdrawInfo(w http.ResponseWriter, r *http.Request) {

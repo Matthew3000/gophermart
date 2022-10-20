@@ -26,7 +26,12 @@ type Balance struct {
 
 type Withdrawals struct {
 	gorm.Model
-	Login     string  `gorm:"unique" json:"login"`
-	Current   float32 `json:"current"`
-	Withdrawn float32 `json:"withdrawn"`
+	Login  string
+	Amount float32
+}
+
+type Withdrawal struct {
+	Login   string  `json:"-"`
+	OrderID string  `json:"order"`
+	Amount  float32 `json:"sum"`
 }

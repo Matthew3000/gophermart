@@ -92,6 +92,7 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 					log.Printf("json decode order accrual: %s", err)
 					return err
 				}
+				log.Printf("accrual for order %s updating to %s", updatedOrder.OrderID, updatedOrder.Status)
 
 				order.Status = updatedOrder.Status
 				order.OrderID = updatedOrder.OrderID
@@ -101,7 +102,10 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 				var user service.User
 				dbStorage.db.Where("login  = 	?", order.Login).First(&user)
 				user.Balance = user.Balance + updatedOrder.Accrual
-				dbStorage.db.Save(&user)
+				err := dbStorage.db.Save(&user).Error
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -138,8 +142,27 @@ func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
 
 	var withdrawn float32
 	for _, withdrawal := range withdrawals {
-		withdrawn += withdrawal.Withdrawn
+		withdrawn += withdrawal.Amount
 	}
 
 	return withdrawn, nil
+}
+
+func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal) error {
+	var withdrawals service.Withdrawals
+	withdrawals.Login = withdrawal.Login
+	withdrawals.Amount = withdrawal.Amount
+	err := dbStorage.db.Save(&withdrawals).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (dbStorage DBStorage) SetBalanceByLogin(login string, newBalance float32) error {
+	err := dbStorage.db.Model(&service.User{}).Where("login = ?", login).Update("balance", newBalance).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
