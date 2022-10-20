@@ -64,7 +64,7 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 
 func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 	var ordersToUpdate []service.Order
-	dbStorage.db.Where("status ?", "NEW").Or("status ?", "REGISTERED").Or("status ?", "PROCESSING").Find(&ordersToUpdate)
+	dbStorage.db.Where("status = ?", "NEW").Or("status = ?", "REGISTERED").Or("status = ?", "PROCESSING").Find(&ordersToUpdate)
 
 	if len(ordersToUpdate) != 0 {
 		req := resty.New().
