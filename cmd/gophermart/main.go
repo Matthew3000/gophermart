@@ -10,6 +10,7 @@ import (
 	"gophermart/internal/service"
 	"gophermart/internal/storage"
 	"log"
+	"time"
 )
 
 func main() {
@@ -28,4 +29,15 @@ func main() {
 	cookieStorage := sessions.NewCookieStore([]byte(service.SecretKey))
 	var application = app.NewApp(cfg, userStorage, *cookieStorage)
 	application.Run()
+
+	tickerUpdate := time.NewTicker(10 * time.Second)
+	go func() {
+		for range tickerUpdate.C {
+			log.Printf("update accural")
+			err := userStorage.UpdateAccrual(cfg.AccrualAddress)
+			if err != nil {
+				log.Printf("update accural: %s", err)
+			}
+		}
+	}()
 }

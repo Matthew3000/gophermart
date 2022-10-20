@@ -2,11 +2,12 @@ package storage
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"gophermart/internal/service"
 	"log"
 	"net/http"
+	"time"
 )
 
 func (dbStorage DBStorage) RegisterUser(user service.User) error {
@@ -43,49 +44,66 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 	return nil
 }
 
-func (dbStorage DBStorage) PutOrder(order service.Order, accrualAddr string) error {
+func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	var checkingOrder service.Order
+
 	dbStorage.db.Where("login  = 	?  AND order_id = ?", order.Login, order.OrderID).First(&checkingOrder)
 	if checkingOrder.Login != "" {
 		return ErrAlreadyExists
 	}
+
 	dbStorage.db.Where("order_id = ?", order.OrderID).First(&checkingOrder)
 	if checkingOrder.Login != "" {
 		return ErrUploadedByAnotherUser
 	}
-	var err error
-	order, err = dbStorage.GetOrderStatus(order, accrualAddr)
-	if err != nil {
-		return err
-	}
+
+	order.Status = "NEW"
 	dbStorage.db.Create(&order)
 	return nil
 }
 
-func (dbStorage DBStorage) GetOrderStatus(order service.Order, accrualAddr string) (service.Order, error) {
-	getStatusURL := accrualAddr + "/api/orders/" + order.OrderID
-	log.Printf("get order status from: %s", getStatusURL)
+func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
+	var ordersToUpdate []service.Order
+	dbStorage.db.Where("status ?", "NEW").Or("status ?", "REGISTERED").Or("status ?", "PROCESSING").Find(&ordersToUpdate)
 
-	response, err := http.Get(getStatusURL)
-	if err != nil {
-		log.Printf("get order status: %s", err)
-		return order, err
-	}
-	defer response.Body.Close()
+	if len(ordersToUpdate) != 0 {
+		req := resty.New().
+			SetBaseURL(accrualAddr).
+			R().
+			SetHeader("Content-Type", "application/json")
+		for _, order := range ordersToUpdate {
 
-	//value, _ := io.ReadAll(response.Body)
-	//log.Printf("response body is  %s", value)
+			orderNum := order.OrderID
+			resp, err := req.Get("/api/orders/" + orderNum)
+			if err != nil {
+				return err
+			}
 
-	var orderResponse service.OrderAccrualResponse
-	if err := json.NewDecoder(response.Body).Decode(&orderResponse); err != nil {
-		log.Printf("json decode order accrual: %s", err)
-		return order, err
+			status := resp.StatusCode()
+			switch status {
+			case http.StatusTooManyRequests:
+				time.Sleep(10 * time.Second)
+				return nil
+
+			case http.StatusOK:
+				var updatedOrder service.AccrualResponse
+				err = json.Unmarshal(resp.Body(), &updatedOrder)
+				if err != nil {
+					log.Printf("json decode order accrual: %s", err)
+					return err
+				}
+
+				order.Status = updatedOrder.Status
+				order.OrderID = updatedOrder.OrderID
+				order.Accrual = updatedOrder.Accrual
+				dbStorage.db.Save(&order)
+
+				var user service.User
+				dbStorage.db.Where("login  = 	?", order.Login).First(&user)
+				user.Balance = user.Balance + updatedOrder.Accrual
+				dbStorage.db.Save(&user)
+			}
+		}
 	}
-	if orderResponse.OrderID == "" {
-		return order, errors.New("empty JSON")
-	}
-	order.Status = orderResponse.Status
-	order.Accrual = orderResponse.Accrual
-	log.Printf("order status: %s, order accrual: %f", order.Status, order.Accrual)
-	return order, nil
+	return nil
 }

@@ -6,9 +6,10 @@ import (
 
 type User struct {
 	gorm.Model
-	Name     string `json:"name"`
-	Login    string `gorm:"unique" json:"login"`
-	Password string `json:"password"`
+	Name     string  `json:"name"`
+	Login    string  `gorm:"unique" json:"login"`
+	Password string  `json:"password"`
+	Balance  float32 `json:"accrual,omitempty"`
 }
 
 type Authentication struct {
