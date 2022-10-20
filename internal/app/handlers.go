@@ -124,7 +124,7 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	order.Login = session.Values["login"].(string)
 	log.Printf("%s", order.Login)
-	err = app.userStorage.PutOrder(order, app.config.AccrualAddress)
+	err = app.userStorage.PutOrder(order)
 	if err != nil {
 		log.Printf("handle upload order: %s", err)
 		if errors.Is(err, storage.ErrAlreadyExists) {
