@@ -24,7 +24,7 @@ func (dbStorage DBStorage) RegisterUser(user service.User) error {
 		return fmt.Errorf("error in password hashing: %s", err)
 	}
 	user.Password = hashedPassword
-	//insert user details in database
+	user.Balance = 0
 	dbStorage.db.Create(&user)
 
 	return nil
