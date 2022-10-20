@@ -120,13 +120,13 @@ func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, erro
 }
 
 func (dbStorage DBStorage) GetBalanceByLogin(login string) (float32, error) {
-	var balance float32
-	err := dbStorage.db.Where("login  = 	?", login).First(&balance).Error
+	var user service.User
+	err := dbStorage.db.Where("login  = 	?", login).First(&user).Error
 	if err != nil {
 		return 0, err
 	}
 
-	return balance, nil
+	return user.Balance, nil
 }
 
 func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
