@@ -11,6 +11,8 @@ type UserStorage interface {
 	PutOrder(order service.Order) error
 	UpdateAccrual(accrualAddr string) error
 	GetOrdersByLogin(login string) ([]service.Order, error)
+	GetBalanceByLogin(login string) (float32, error)
+	GetWithdrawnAmount(login string) (float32, error)
 }
 
 var (

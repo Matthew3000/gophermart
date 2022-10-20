@@ -17,3 +17,16 @@ type AccrualResponse struct {
 	Status  string  `json:"status"`
 	Accrual float32 `json:"accrual"`
 }
+
+type Balance struct {
+	Login     string  `json:"-"`
+	Current   float32 `json:"current"`
+	Withdrawn float32 `json:"withdrawn"`
+}
+
+type Withdrawals struct {
+	gorm.Model
+	Login     string  `gorm:"unique" json:"login"`
+	Current   float32 `json:"current"`
+	Withdrawn float32 `json:"withdrawn"`
+}

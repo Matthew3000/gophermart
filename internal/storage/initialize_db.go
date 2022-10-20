@@ -34,4 +34,5 @@ func NewUserStorage(DatabaseURL string) *DBStorage {
 func InitializeTables(connection *gorm.DB) {
 	connection.AutoMigrate(service.User{})
 	connection.AutoMigrate(service.Order{})
+	connection.AutoMigrate(service.Withdrawals{})
 }

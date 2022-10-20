@@ -118,3 +118,28 @@ func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, erro
 
 	return orders, nil
 }
+
+func (dbStorage DBStorage) GetBalanceByLogin(login string) (float32, error) {
+	var balance float32
+	err := dbStorage.db.Where("login  = 	?", login).First(&balance).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return balance, nil
+}
+
+func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
+	var withdrawals []service.Withdrawals
+	err := dbStorage.db.Where("login  = 	?", login).Find(&withdrawals).Error
+	if err != nil {
+		return 0, err
+	}
+
+	var withdrawn float32
+	for _, withdrawal := range withdrawals {
+		withdrawn += withdrawal.Withdrawn
+	}
+
+	return withdrawn, nil
+}

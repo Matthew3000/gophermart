@@ -162,7 +162,23 @@ func (app *App) handleGetOrders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) handleGetBalance(w http.ResponseWriter, r *http.Request) {
+	var balance service.Balance
+	session, _ := app.cookieStorage.Get(r, "session.id")
+	balance.Login = session.Values["login"].(string)
 
+	currentBalance, err := app.userStorage.GetBalanceByLogin(balance.Login)
+	if err != nil {
+		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+	}
+
+	balance.Current = currentBalance
+	withdrawn, err := app.userStorage.GetWithdrawnAmount(balance.Login)
+	if err != nil {
+		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+	}
+
+	balance.Withdrawn = withdrawn
+	render.JSON(w, r, balance)
 }
 
 func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {

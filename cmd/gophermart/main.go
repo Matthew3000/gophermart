@@ -29,7 +29,7 @@ func main() {
 	cookieStorage := sessions.NewCookieStore([]byte(service.SecretKey))
 	var application = app.NewApp(cfg, userStorage, *cookieStorage)
 
-	tickerUpdate := time.NewTicker(10 * time.Second)
+	tickerUpdate := time.NewTicker(5 * time.Second)
 	go func() {
 		for range tickerUpdate.C {
 			log.Printf("update accural")
