@@ -28,7 +28,6 @@ func main() {
 	userStorage := storage.NewUserStorage(cfg.DatabaseDSN)
 	cookieStorage := sessions.NewCookieStore([]byte(service.SecretKey))
 	var application = app.NewApp(cfg, userStorage, *cookieStorage)
-	application.Run()
 
 	tickerUpdate := time.NewTicker(10 * time.Second)
 	go func() {
@@ -40,4 +39,6 @@ func main() {
 			}
 		}
 	}()
+
+	application.Run()
 }

@@ -107,3 +107,14 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 	}
 	return nil
 }
+
+func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, error) {
+	var orders []service.Order
+
+	dbStorage.db.Where("login  = 	?", login).Find(&orders)
+	if len(orders) == 0 {
+		return nil, ErrOrderListEmpty
+	}
+
+	return orders, nil
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-chi/render"
 	"github.com/theplant/luhn"
 	"gophermart/internal/service"
 	"gophermart/internal/storage"
@@ -141,7 +142,23 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) handleGetOrders(w http.ResponseWriter, r *http.Request) {
+	var order service.Order
 
+	session, _ := app.cookieStorage.Get(r, "session.id")
+	order.Login = session.Values["login"].(string)
+
+	listOrders, err := app.userStorage.GetOrdersByLogin(order.Login)
+
+	if err != nil {
+		if errors.Is(err, storage.ErrOrderListEmpty) {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			log.Printf("handle get orders: %s", err)
+			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
+			return
+		}
+	}
+	render.JSON(w, r, listOrders)
 }
 
 func (app *App) handleGetBalance(w http.ResponseWriter, r *http.Request) {
