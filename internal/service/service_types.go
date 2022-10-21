@@ -24,12 +24,6 @@ type Balance struct {
 	Withdrawn float32 `json:"withdrawn"`
 }
 
-//type Withdrawals struct {
-//	Login       string
-//	Amount      float32
-//	ProcessedAt time.Time `json:"processed_at,omitempty"`
-//}
-
 type Withdrawal struct {
 	Login       string    `json:"-"`
 	OrderID     string    `json:"order"`
