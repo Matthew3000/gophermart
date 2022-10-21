@@ -98,7 +98,8 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 				order.Status = updatedOrder.Status
 				order.OrderID = updatedOrder.OrderID
 				order.Accrual = updatedOrder.Accrual
-				dbStorage.db.Save(&order)
+				//dbStorage.db.Save(&order)
+				dbStorage.db.Model(&service.Order{}).Where("orderID = ?", updatedOrder.OrderID).Updates(service.Order{Status: updatedOrder.Status, Accrual: updatedOrder.Accrual})
 
 				var user service.User
 				dbStorage.db.Where("login  = 	?", order.Login).First(&user)
