@@ -1,16 +1,15 @@
 package service
 
 import (
-	"github.com/jinzhu/gorm"
 	"time"
 )
 
 type Order struct {
-	gorm.Model
-	Login   string  `gorm:"unique" json:"login"`
-	OrderID string  `gorm:"unique" json:"order_id,omitempty"`
-	Status  string  `json:"status,omitempty"`
-	Accrual float32 `json:"accrual,omitempty"`
+	Login      string    `gorm:"unique" json:"-"`
+	OrderID    string    `gorm:"unique" json:"order_id,omitempty"`
+	Status     string    `json:"status,omitempty"`
+	Accrual    float32   `json:"accrual,omitempty"`
+	UploadedAt time.Time `json:"uploaded_at,omitempty"`
 }
 
 type AccrualResponse struct {

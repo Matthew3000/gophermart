@@ -58,6 +58,7 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	}
 
 	order.Status = "NEW"
+	order.UploadedAt = time.Now()
 	dbStorage.db.Create(&order)
 	return nil
 }
@@ -115,7 +116,7 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, error) {
 	var orders []service.Order
 
-	dbStorage.db.Where("login  = 	?", login).Find(&orders)
+	dbStorage.db.Where("login  = 	?", login).Order("uploaded_at asc").Find(&orders)
 	if len(orders) == 0 {
 		return nil, ErrOrderListEmpty
 	}
