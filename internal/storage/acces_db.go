@@ -47,12 +47,12 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	var checkingOrder service.Order
 
-	dbStorage.db.Where("login  = 	?  AND order_id = ?", order.Login, order.OrderID).First(&checkingOrder)
+	dbStorage.db.Where("login  = 	?  AND number = ?", order.Login, order.OrderID).First(&checkingOrder)
 	if checkingOrder.Login != "" {
 		return ErrAlreadyExists
 	}
 
-	dbStorage.db.Where("order_id = ?", order.OrderID).First(&checkingOrder)
+	dbStorage.db.Where("number = ?", order.OrderID).First(&checkingOrder)
 	if checkingOrder.Login != "" {
 		return ErrUploadedByAnotherUser
 	}
@@ -65,7 +65,8 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 
 func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 	var ordersToUpdate []service.Order
-	dbStorage.db.Where("status = ?", "NEW").Or("status = ?", "REGISTERED").Or("status = ?", "PROCESSING").Find(&ordersToUpdate)
+	dbStorage.db.Where("status = ?", "NEW").Or("status = ?", "REGISTERED").
+		Or("status = ?", "PROCESSING").Find(&ordersToUpdate)
 
 	if len(ordersToUpdate) != 0 {
 		req := resty.New().
@@ -95,7 +96,8 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 				}
 				log.Printf("accrual for order %s updating to %s", updatedOrder.OrderID, updatedOrder.Status)
 
-				dbStorage.db.Model(&service.Order{}).Where("order_id = ?", updatedOrder.OrderID).Updates(service.Order{Status: updatedOrder.Status, Accrual: updatedOrder.Accrual})
+				dbStorage.db.Model(&service.Order{}).Where("number = ?", updatedOrder.OrderID).
+					Updates(service.Order{Status: updatedOrder.Status, Accrual: updatedOrder.Accrual})
 
 				var user service.User
 				dbStorage.db.Where("login  = 	?", order.Login).First(&user)

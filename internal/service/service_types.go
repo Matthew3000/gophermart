@@ -5,7 +5,7 @@ import (
 )
 
 type Order struct {
-	OrderID    string    `gorm:"unique" json:"order_id,omitempty"`
+	OrderID    string    `gorm:"unique" json:"number,omitempty"`
 	Login      string    `json:"-"`
 	Status     string    `json:"status,omitempty"`
 	Accrual    float32   `json:"accrual,omitempty"`
