@@ -15,7 +15,7 @@ type UserStorage interface {
 	GetWithdrawnAmount(login string) (float32, error)
 	Withdraw(withdrawal service.Withdrawal) error
 	SetBalanceByLogin(login string, newBalance float32) error
-	GetWithdrawals(login string) ([]service.Withdrawals, error)
+	GetWithdrawals(login string) ([]service.Withdrawal, error)
 }
 
 var (
