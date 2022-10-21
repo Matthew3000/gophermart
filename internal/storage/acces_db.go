@@ -149,11 +149,8 @@ func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
 }
 
 func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal) error {
-	var withdrawals service.Withdrawal
-	withdrawals.Login = withdrawal.Login
-	withdrawals.Amount = withdrawal.Amount
-	withdrawals.ProcessedAt = time.Now()
-	err := dbStorage.db.Save(&withdrawals).Error
+	withdrawal.ProcessedAt = time.Now()
+	err := dbStorage.db.Save(&withdrawal).Error
 	if err != nil {
 		return err
 	}
