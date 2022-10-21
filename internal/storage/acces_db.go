@@ -95,10 +95,6 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 				}
 				log.Printf("accrual for order %s updating to %s", updatedOrder.OrderID, updatedOrder.Status)
 
-				//order.Status = updatedOrder.Status
-				//order.OrderID = updatedOrder.OrderID
-				//order.Accrual = updatedOrder.Accrual
-				//dbStorage.db.Save(&order)
 				dbStorage.db.Model(&service.Order{}).Where("order_id = ?", updatedOrder.OrderID).Updates(service.Order{Status: updatedOrder.Status, Accrual: updatedOrder.Accrual})
 
 				var user service.User
@@ -170,7 +166,6 @@ func (dbStorage DBStorage) SetBalanceByLogin(login string, newBalance float32) e
 func (dbStorage DBStorage) GetWithdrawals(login string) ([]service.Withdrawal, error) {
 	var withdrawals []service.Withdrawal
 	err := dbStorage.db.Where("login  = 	?", login).Order("processed_at asc").Find(&withdrawals).Error
-	// .Order("created_at asc")
 	if err != nil {
 		return nil, err
 	}

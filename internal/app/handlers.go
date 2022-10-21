@@ -148,7 +148,7 @@ func (app *App) handleGetOrders(w http.ResponseWriter, r *http.Request) {
 	order.Login = session.Values["login"].(string)
 
 	listOrders, err := app.userStorage.GetOrdersByLogin(order.Login)
-	//log.Print(listOrders)
+	log.Print(listOrders)
 	if err != nil {
 		if errors.Is(err, storage.ErrOrderListEmpty) {
 			w.WriteHeader(http.StatusNoContent)
@@ -236,7 +236,6 @@ func (app *App) handleWithdrawInfo(w http.ResponseWriter, r *http.Request) {
 	login := session.Values["login"].(string)
 
 	listWithdrawals, err := app.userStorage.GetWithdrawals(login)
-	log.Print(listWithdrawals)
 	if err != nil {
 		log.Printf("handle withdraw info: get withdarw: %s", err)
 		if errors.Is(err, storage.ErrWithdrawListEmpty) {
