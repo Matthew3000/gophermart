@@ -40,7 +40,7 @@ func (app *App) Run() {
 	router.HandleFunc("/api/user/orders", app.IsAuthorized(app.handleGetOrders)).Methods(http.MethodGet)
 	router.HandleFunc("/api/user/balance", app.IsAuthorized(app.handleGetBalance)).Methods(http.MethodGet)
 	router.HandleFunc("/api/user/balance/withdraw", app.IsAuthorized(app.handleWithdraw)).Methods(http.MethodPost)
-	router.HandleFunc("/api/user/balance/withdrawals", app.IsAuthorized(app.handleWithdrawInfo)).Methods(http.MethodGet)
+	router.HandleFunc("/api/user/withdrawals", app.IsAuthorized(app.handleWithdrawInfo)).Methods(http.MethodGet)
 
 	router.HandleFunc("/", app.handleDefault)
 

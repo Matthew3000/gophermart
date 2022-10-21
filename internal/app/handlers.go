@@ -148,7 +148,7 @@ func (app *App) handleGetOrders(w http.ResponseWriter, r *http.Request) {
 	order.Login = session.Values["login"].(string)
 
 	listOrders, err := app.userStorage.GetOrdersByLogin(order.Login)
-
+	log.Print(listOrders)
 	if err != nil {
 		if errors.Is(err, storage.ErrOrderListEmpty) {
 			w.WriteHeader(http.StatusNoContent)
