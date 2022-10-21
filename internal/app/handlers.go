@@ -120,7 +120,7 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var order service.Order
-	order.OrderID = fmt.Sprint(orderID)
+	order.Number = fmt.Sprint(orderID)
 
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	order.Login = session.Values["login"].(string)

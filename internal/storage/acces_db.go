@@ -47,12 +47,12 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	var checkingOrder service.Order
 
-	dbStorage.db.Where("login  = 	?  AND number = ?", order.Login, order.OrderID).First(&checkingOrder)
+	dbStorage.db.Where("login  = 	?  AND number = ?", order.Login, order.Number).First(&checkingOrder)
 	if checkingOrder.Login != "" {
 		return ErrAlreadyExists
 	}
 
-	dbStorage.db.Where("number = ?", order.OrderID).First(&checkingOrder)
+	dbStorage.db.Where("number = ?", order.Number).First(&checkingOrder)
 	if checkingOrder.Login != "" {
 		return ErrUploadedByAnotherUser
 	}
@@ -75,7 +75,7 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 			SetHeader("Content-Type", "application/json")
 		for _, order := range ordersToUpdate {
 
-			orderNum := order.OrderID
+			orderNum := order.Number
 			resp, err := req.Get("/api/orders/" + orderNum)
 			if err != nil {
 				return err
