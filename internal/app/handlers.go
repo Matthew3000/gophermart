@@ -219,8 +219,8 @@ func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = app.userStorage.SetBalanceByLogin(withdrawal.Login, newBalance)
-		log.Printf("handle withdraw: set balance: %s", err)
 		if err != nil {
+			log.Printf("handle withdraw: set balance: %s", err)
 			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
 			return
 		}

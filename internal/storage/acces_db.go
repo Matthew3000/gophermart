@@ -134,7 +134,7 @@ func (dbStorage DBStorage) GetBalanceByLogin(login string) (float32, error) {
 }
 
 func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
-	var withdrawals []service.Withdrawals
+	var withdrawals []service.Withdrawal
 	err := dbStorage.db.Where("login  = 	?", login).Find(&withdrawals).Error
 	if err != nil {
 		return 0, err
@@ -149,9 +149,10 @@ func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
 }
 
 func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal) error {
-	var withdrawals service.Withdrawals
+	var withdrawals service.Withdrawal
 	withdrawals.Login = withdrawal.Login
 	withdrawals.Amount = withdrawal.Amount
+	withdrawals.ProcessedAt = time.Now()
 	err := dbStorage.db.Save(&withdrawals).Error
 	if err != nil {
 		return err
@@ -167,8 +168,8 @@ func (dbStorage DBStorage) SetBalanceByLogin(login string, newBalance float32) e
 	return nil
 }
 
-func (dbStorage DBStorage) GetWithdrawals(login string) ([]service.Withdrawals, error) {
-	var withdrawals []service.Withdrawals
+func (dbStorage DBStorage) GetWithdrawals(login string) ([]service.Withdrawal, error) {
+	var withdrawals []service.Withdrawal
 	err := dbStorage.db.Where("login  = 	?", login).Find(&withdrawals).Error
 	// .Order("created_at asc")
 	if err != nil {
