@@ -15,6 +15,7 @@ type UserStorage interface {
 	GetWithdrawnAmount(login string) (float32, error)
 	Withdraw(withdrawal service.Withdrawal) error
 	SetBalanceByLogin(login string, newBalance float32) error
+	GetWithdrawals(login string) ([]service.Withdrawals, error)
 }
 
 var (
@@ -23,4 +24,5 @@ var (
 	ErrAlreadyExists         = errors.New("this order is already uploaded")
 	ErrUploadedByAnotherUser = errors.New("this order is uploaded by another user")
 	ErrOrderListEmpty        = errors.New("order list is empty")
+	ErrWithdrawListEmpty     = errors.New("withdraw list is empty")
 )

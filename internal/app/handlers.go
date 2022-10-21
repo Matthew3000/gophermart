@@ -168,12 +168,14 @@ func (app *App) handleGetBalance(w http.ResponseWriter, r *http.Request) {
 
 	currentBalance, err := app.userStorage.GetBalanceByLogin(balance.Login)
 	if err != nil {
+		log.Printf("handle withdraw: get balance: %s", err)
 		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
 	}
 
 	balance.Current = currentBalance
 	withdrawn, err := app.userStorage.GetWithdrawnAmount(balance.Login)
 	if err != nil {
+		log.Printf("handle withdraw: get withdrawn amount: %s", err)
 		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
 	}
 
@@ -211,11 +213,13 @@ func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
 	if newBalance >= 0 {
 		err = app.userStorage.Withdraw(withdrawal)
 		if err != nil {
+			log.Printf("handle withdraw: withdraw: %s", err)
 			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
 			return
 		}
 
 		err = app.userStorage.SetBalanceByLogin(withdrawal.Login, newBalance)
+		log.Printf("handle withdraw: set balance: %s", err)
 		if err != nil {
 			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
 			return
@@ -228,6 +232,21 @@ func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
 
 func (app *App) handleWithdrawInfo(w http.ResponseWriter, r *http.Request) {
 
+	session, _ := app.cookieStorage.Get(r, "session.id")
+	login := session.Values["login"].(string)
+
+	listWithdrawals, err := app.userStorage.GetWithdrawals(login)
+	if err != nil {
+		log.Printf("handle withdraw info: gat withdarw: %s", err)
+		if errors.Is(err, storage.ErrWithdrawListEmpty) {
+			w.WriteHeader(http.StatusNoContent)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Println(err)
+		}
+	}
+
+	render.JSON(w, r, listWithdrawals)
 }
 
 func (app *App) handleDefault(w http.ResponseWriter, r *http.Request) {

@@ -166,3 +166,17 @@ func (dbStorage DBStorage) SetBalanceByLogin(login string, newBalance float32) e
 	}
 	return nil
 }
+
+func (dbStorage DBStorage) GetWithdrawals(login string) ([]service.Withdrawals, error) {
+	var withdrawals []service.Withdrawals
+	err := dbStorage.db.Where("login  = 	?", login).Find(&withdrawals).Error
+	// .Order("created_at asc")
+	if err != nil {
+		return nil, err
+	}
+	if len(withdrawals) == 0 {
+		return nil, ErrWithdrawListEmpty
+	}
+
+	return withdrawals, nil
+}
