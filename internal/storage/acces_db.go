@@ -1,14 +1,10 @@
 package storage
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-resty/resty/v2"
 	"github.com/jinzhu/gorm"
 	"gophermart/internal/service"
-	"log"
-	"net/http"
 	"time"
 )
 
@@ -80,54 +76,86 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	return nil
 }
 
-func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
+func (dbStorage DBStorage) GetOrdersToUpdate() ([]service.Order, error) {
 	var ordersToUpdate []service.Order
-	dbStorage.db.Where("status = ?", NEW).Or("status = ?", REGISTERED).
-		Or("status = ?", PROCESSING).Find(&ordersToUpdate)
+	err := dbStorage.db.Where("status = ?", NEW).Or("status = ?", REGISTERED).
+		Or("status = ?", PROCESSING).Find(&ordersToUpdate).Error
+	if err != nil {
+		return nil, err
+	}
+	return ordersToUpdate, nil
+}
 
-	if len(ordersToUpdate) != 0 {
-		req := resty.New().
-			SetBaseURL(accrualAddr).
-			R().
-			SetHeader("Content-Type", "application/json")
-		for _, order := range ordersToUpdate {
+func (dbStorage DBStorage) UpdateOrderStatus(order service.Order) error {
+	err := dbStorage.db.Model(&service.Order{}).Where("number = ?", order.Number).
+		Updates(service.Order{Status: order.Status, Accrual: order.Accrual}).Error
+	if err != nil {
+		return err
+	}
 
-			orderNum := order.Number
-			resp, err := req.Get("/api/orders/" + orderNum)
-			if err != nil {
-				return err
-			}
+	var user service.User
+	err = dbStorage.db.Where("login  = 	?", order.Login).First(&user).Error
+	if err != nil {
+		return err
+	}
 
-			status := resp.StatusCode()
-			switch status {
-			case http.StatusTooManyRequests:
-				time.Sleep(10 * time.Second)
-				return nil
-
-			case http.StatusOK:
-				var updatedOrder service.AccrualResponse
-				err = json.Unmarshal(resp.Body(), &updatedOrder)
-				if err != nil {
-					log.Printf("json decode order accrual: %s", err)
-					return err
-				}
-				log.Printf("accrual for order %s updating to %s", updatedOrder.OrderID, updatedOrder.Status)
-
-				dbStorage.db.Model(&service.Order{}).Where("number = ?", updatedOrder.OrderID).
-					Updates(service.Order{Status: updatedOrder.Status, Accrual: updatedOrder.Accrual})
-
-				var user service.User
-				dbStorage.db.Where("login  = 	?", order.Login).First(&user)
-				user.Balance = user.Balance + updatedOrder.Accrual
-				err := dbStorage.db.Save(&user).Error
-				if err != nil {
-					return err
-				}
-			}
-		}
+	user.Balance = user.Balance + order.Accrual
+	err = dbStorage.db.Save(&user).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }
+
+//
+//func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
+//	var ordersToUpdate []service.Order
+//	dbStorage.db.Where("status = ?", NEW).Or("status = ?", REGISTERED).
+//		Or("status = ?", PROCESSING).Find(&ordersToUpdate)
+//
+//	if len(ordersToUpdate) != 0 {
+//		req := resty.New().
+//			SetBaseURL(accrualAddr).
+//			R().
+//			SetHeader("Content-Type", "application/json")
+//		for _, order := range ordersToUpdate {
+//
+//			orderNum := order.Number
+//			resp, err := req.Get("/api/orders/" + orderNum)
+//			if err != nil {
+//				return err
+//			}
+//
+//			status := resp.StatusCode()
+//			switch status {
+//			case http.StatusTooManyRequests:
+//				time.Sleep(10 * time.Second)
+//				return nil
+//
+//			case http.StatusOK:
+//				var updatedOrder service.AccrualResponse
+//				err = json.Unmarshal(resp.Body(), &updatedOrder)
+//				if err != nil {
+//					log.Printf("json decode order accrual: %s", err)
+//					return err
+//				}
+//				log.Printf("accrual for order %s updating to %s", updatedOrder.OrderID, updatedOrder.Status)
+//
+//				dbStorage.db.Model(&service.Order{}).Where("number = ?", updatedOrder.OrderID).
+//					Updates(service.Order{Status: updatedOrder.Status, Accrual: updatedOrder.Accrual})
+//
+//				var user service.User
+//				dbStorage.db.Where("login  = 	?", order.Login).First(&user)
+//				user.Balance = user.Balance + updatedOrder.Accrual
+//				err := dbStorage.db.Save(&user).Error
+//				if err != nil {
+//					return err
+//				}
+//			}
+//		}
+//	}
+//	return nil
+//}
 
 func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, error) {
 	var orders []service.Order

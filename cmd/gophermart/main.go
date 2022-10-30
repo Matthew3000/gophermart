@@ -29,11 +29,11 @@ func main() {
 	cookieStorage := sessions.NewCookieStore([]byte(service.SecretKey))
 	var application = app.NewApp(cfg, userStorage, *cookieStorage)
 
-	tickerUpdate := time.NewTicker(5 * time.Second)
+	tickerUpdate := time.NewTicker(storage.UPDATEACCURALTIMER)
 	go func() {
 		for range tickerUpdate.C {
-			log.Printf("update accural")
-			err := userStorage.UpdateAccrual(cfg.AccrualAddress)
+			log.Printf("updating accural")
+			err := application.UpdateAccrual()
 			if err != nil {
 				log.Printf("update accural: %s", err)
 			}

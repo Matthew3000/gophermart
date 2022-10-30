@@ -3,19 +3,21 @@ package storage
 import (
 	"errors"
 	"gophermart/internal/service"
+	"time"
 )
 
 type UserStorage interface {
 	CheckUserAuth(authDetails service.Authentication) error
 	RegisterUser(user service.User) error
 	PutOrder(order service.Order) error
-	UpdateAccrual(accrualAddr string) error
 	GetOrdersByLogin(login string) ([]service.Order, error)
 	GetBalanceByLogin(login string) (float32, error)
 	GetWithdrawnAmount(login string) (float32, error)
 	Withdraw(withdrawal service.Withdrawal) error
 	SetBalanceByLogin(login string, newBalance float32) error
 	GetWithdrawals(login string) ([]service.Withdrawal, error)
+	GetOrdersToUpdate() ([]service.Order, error)
+	UpdateOrderStatus(order service.Order) error
 	DeleteAll()
 }
 
@@ -29,7 +31,8 @@ var (
 )
 
 const (
-	NEW        = "NEW"
-	REGISTERED = "REGISTERED"
-	PROCESSING = "PROCESSING"
+	NEW                = "NEW"
+	REGISTERED         = "REGISTERED"
+	PROCESSING         = "PROCESSING"
+	UPDATEACCURALTIMER = 5 * time.Second
 )
