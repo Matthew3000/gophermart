@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 /*
@@ -32,6 +34,10 @@ func (app *App) IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 			handler.ServeHTTP(w, r)
 			return
 		}
+
+		ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+		r = r.WithContext(ctx)
+
 		http.Redirect(w, r, "/login", http.StatusUnauthorized)
 	}
 }
