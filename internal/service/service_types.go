@@ -5,7 +5,7 @@ import (
 )
 
 type Order struct {
-	Number     string    `gorm:"unique" json:"number,omitempty"`
+	Number     string    `json:"number,omitempty" gorm:"unique"`
 	Login      string    `json:"-"`
 	Status     string    `json:"status,omitempty"`
 	Accrual    float32   `json:"accrual,omitempty"`
@@ -26,7 +26,7 @@ type Balance struct {
 
 type Withdrawal struct {
 	Login       string    `json:"-"`
-	OrderID     string    `json:"order"`
+	OrderID     string    `json:"order" gorm:"primaryKey"`
 	Amount      float32   `json:"sum"`
 	ProcessedAt time.Time `json:"processed_at,omitempty"`
 }
