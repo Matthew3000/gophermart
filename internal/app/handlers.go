@@ -35,7 +35,8 @@ func (app *App) IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
 		r = r.WithContext(ctx)
 
 		http.Redirect(w, r, "/login", http.StatusUnauthorized)
@@ -134,7 +135,7 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	order.Login = session.Values["login"].(string)
-	err = app.userStorage.PutOrder(order)
+	err = app.userStorage.PutOrder(order, r.Context())
 	if err != nil {
 		log.Printf("upload order: %s for user: %s, number: %s", err, order.Login, order.Number)
 		if errors.Is(err, storage.ErrAlreadyExists) {

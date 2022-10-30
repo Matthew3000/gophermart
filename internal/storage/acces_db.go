@@ -1,10 +1,12 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/jinzhu/gorm"
+
 	"gophermart/internal/service"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -47,7 +49,7 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 	return nil
 }
 
-func (dbStorage DBStorage) PutOrder(order service.Order) error {
+func (dbStorage DBStorage) PutOrder(order service.Order, ctx context.Context) error {
 	var checkingOrder service.Order
 
 	err := dbStorage.db.Where("login  = 	?  AND number = ?", order.Login, order.Number).First(&checkingOrder).Error
@@ -72,7 +74,11 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 
 	order.Status = NEW
 	order.UploadedAt = time.Now()
-	dbStorage.db.Create(&order)
+	err = dbStorage.db.Create(&order).Error
+	if err != nil {
+		return err
+	}
+	//dbStorage.db.WithContext(ctx).Create(&order)
 	return nil
 }
 
