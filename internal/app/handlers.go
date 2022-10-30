@@ -39,6 +39,15 @@ func (app *App) IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func (app *App) AddContext(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		r = r.WithContext(ctx)
+		handler.ServeHTTP(w, r)
+	})
+}
+
 func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var user service.User
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -48,7 +57,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.userStorage.RegisterUser(user)
+	err = app.userStorage.RegisterUser(user, r.Context())
 	if err != nil {
 		log.Printf("register err: %s for user: %s, password: %s", err, user.Login, user.Password)
 		if errors.Is(err, storage.ErrUserExists) {
@@ -62,7 +71,7 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 	var authDetails service.Authentication
 	authDetails.Login = user.Login
 	authDetails.Password = user.Password
-	err = app.userStorage.CheckUserAuth(authDetails)
+	err = app.userStorage.CheckUserAuth(authDetails, r.Context())
 	if err != nil {
 		log.Printf("register then auth err: %s for user: %s, password: %s", err, authDetails.Login, authDetails.Password)
 		if errors.Is(err, storage.ErrInvalidCredentials) {
@@ -89,7 +98,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.userStorage.CheckUserAuth(authDetails)
+	err = app.userStorage.CheckUserAuth(authDetails, r.Context())
 	if err != nil {
 		log.Printf("auth err: %s for user: %s, password: %s", err, authDetails.Login, authDetails.Password)
 		if errors.Is(err, storage.ErrInvalidCredentials) {
@@ -108,9 +117,6 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	r = r.WithContext(ctx)
 
 	value, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -154,7 +160,7 @@ func (app *App) handleGetOrders(w http.ResponseWriter, r *http.Request) {
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	order.Login = session.Values["login"].(string)
 
-	listOrders, err := app.userStorage.GetOrdersByLogin(order.Login)
+	listOrders, err := app.userStorage.GetOrdersByLogin(order.Login, r.Context())
 	if err != nil {
 		log.Printf("get orders: %s for user: %s", err, order.Login)
 		if errors.Is(err, storage.ErrOrderListEmpty) {
@@ -172,14 +178,14 @@ func (app *App) handleGetBalance(w http.ResponseWriter, r *http.Request) {
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	balance.Login = session.Values["login"].(string)
 
-	currentBalance, err := app.userStorage.GetBalanceByLogin(balance.Login)
+	currentBalance, err := app.userStorage.GetBalanceByLogin(balance.Login, r.Context())
 	if err != nil {
 		log.Printf("handle withdraw: get balance: %s for user: %s", err, balance.Login)
 		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
 	}
 
 	balance.Current = currentBalance
-	withdrawn, err := app.userStorage.GetWithdrawnAmount(balance.Login)
+	withdrawn, err := app.userStorage.GetWithdrawnAmount(balance.Login, r.Context())
 	if err != nil {
 		log.Printf("handle withdraw: get withdrawn amount: %s for user: %s", err, balance.Login)
 		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
@@ -209,7 +215,7 @@ func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentBalance, err := app.userStorage.GetBalanceByLogin(withdrawal.Login)
+	currentBalance, err := app.userStorage.GetBalanceByLogin(withdrawal.Login, r.Context())
 	if err != nil {
 		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
 		return
@@ -217,7 +223,7 @@ func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
 
 	newBalance := currentBalance - withdrawal.Amount
 	if newBalance >= 0 {
-		err = app.userStorage.Withdraw(withdrawal)
+		err = app.userStorage.Withdraw(withdrawal, r.Context())
 		if err != nil {
 			log.Printf("withdraw: read request body: %s for user: %s amount: %f order: %s",
 				err, withdrawal.Login, withdrawal.Amount, withdrawal.OrderID)
@@ -225,7 +231,7 @@ func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = app.userStorage.SetBalanceByLogin(withdrawal.Login, newBalance)
+		err = app.userStorage.SetBalanceByLogin(withdrawal.Login, newBalance, r.Context())
 		if err != nil {
 			log.Printf("withdraw: read request body: %s for user: %s balance: %f order: %s",
 				err, withdrawal.Login, newBalance, withdrawal.OrderID)
@@ -242,7 +248,7 @@ func (app *App) handleWithdrawInfo(w http.ResponseWriter, r *http.Request) {
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	login := session.Values["login"].(string)
 
-	listWithdrawals, err := app.userStorage.GetWithdrawals(login)
+	listWithdrawals, err := app.userStorage.GetWithdrawals(login, r.Context())
 	if err != nil {
 		log.Printf("withdraw info: get withdarw: %s for user: %s", err, login)
 		if errors.Is(err, storage.ErrWithdrawListEmpty) {

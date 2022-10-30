@@ -32,7 +32,7 @@ func NewApp(cfg config.Config, userStorage storage.UserStorage, cookieStorage se
 
 func (app *App) Run() {
 	router := mux.NewRouter()
-	router.Use(tools.GzipMiddleware)
+	router.Use(tools.GzipMiddleware, app.AddContext)
 
 	router.HandleFunc("/api/user/register", app.handleRegister).Methods(http.MethodPost)
 	router.HandleFunc("/api/user/login", app.handleLogin).Methods(http.MethodPost)

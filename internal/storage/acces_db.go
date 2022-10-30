@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-func (dbStorage DBStorage) RegisterUser(user service.User) error {
+func (dbStorage DBStorage) RegisterUser(user service.User, ctx context.Context) error {
 	var dbUser service.User
-	err := dbStorage.db.Where("login = ?", user.Login).First(&dbUser).Error
+	err := dbStorage.db.WithContext(ctx).Where("login = ?", user.Login).First(&dbUser).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			hashedPassword, err := service.GeneratePasswordHash(user.Password)
@@ -20,7 +20,7 @@ func (dbStorage DBStorage) RegisterUser(user service.User) error {
 			}
 			user.Password = hashedPassword
 			user.Balance = 0
-			err = dbStorage.db.Create(&user).Error
+			err = dbStorage.db.WithContext(ctx).Create(&user).Error
 			if err != nil {
 				return err
 			}
@@ -31,10 +31,10 @@ func (dbStorage DBStorage) RegisterUser(user service.User) error {
 	return ErrUserExists
 }
 
-func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) error {
+func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication, ctx context.Context) error {
 	var authUser service.User
 
-	err := dbStorage.db.Where("login  = 	?", authDetails.Login).First(&authUser).Error
+	err := dbStorage.db.WithContext(ctx).Where("login  = 	?", authDetails.Login).First(&authUser).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrInvalidCredentials
@@ -81,9 +81,9 @@ func (dbStorage DBStorage) PutOrder(order service.Order, ctx context.Context) er
 	return nil
 }
 
-func (dbStorage DBStorage) GetOrdersToUpdate() ([]service.Order, error) {
+func (dbStorage DBStorage) GetOrdersToUpdate(ctx context.Context) ([]service.Order, error) {
 	var ordersToUpdate []service.Order
-	err := dbStorage.db.Where("status = ?", NEW).Or("status = ?", REGISTERED).
+	err := dbStorage.db.WithContext(ctx).Where("status = ?", NEW).Or("status = ?", REGISTERED).
 		Or("status = ?", PROCESSING).Find(&ordersToUpdate).Error
 	if err != nil {
 		return nil, err
@@ -91,31 +91,31 @@ func (dbStorage DBStorage) GetOrdersToUpdate() ([]service.Order, error) {
 	return ordersToUpdate, nil
 }
 
-func (dbStorage DBStorage) UpdateOrderStatus(order service.Order) error {
-	err := dbStorage.db.Model(&service.Order{}).Where("number = ?", order.Number).
+func (dbStorage DBStorage) UpdateOrderStatus(order service.Order, ctx context.Context) error {
+	err := dbStorage.db.WithContext(ctx).Model(&service.Order{}).Where("number = ?", order.Number).
 		Updates(service.Order{Status: order.Status, Accrual: order.Accrual}).Error
 	if err != nil {
 		return err
 	}
 
 	var user service.User
-	err = dbStorage.db.Where("login  = 	?", order.Login).First(&user).Error
+	err = dbStorage.db.WithContext(ctx).Where("login  = 	?", order.Login).First(&user).Error
 	if err != nil {
 		return err
 	}
 
 	user.Balance = user.Balance + order.Accrual
-	err = dbStorage.db.Save(&user).Error
+	err = dbStorage.db.WithContext(ctx).Save(&user).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, error) {
+func (dbStorage DBStorage) GetOrdersByLogin(login string, ctx context.Context) ([]service.Order, error) {
 	var orders []service.Order
 
-	err := dbStorage.db.Where("login  = 	?", login).Order("uploaded_at asc").Find(&orders).Error
+	err := dbStorage.db.WithContext(ctx).Where("login  = 	?", login).Order("uploaded_at asc").Find(&orders).Error
 	if len(orders) == 0 {
 		return nil, ErrOrderListEmpty
 	}
@@ -126,9 +126,9 @@ func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, erro
 	return orders, nil
 }
 
-func (dbStorage DBStorage) GetBalanceByLogin(login string) (float32, error) {
+func (dbStorage DBStorage) GetBalanceByLogin(login string, ctx context.Context) (float32, error) {
 	var user service.User
-	err := dbStorage.db.Where("login  = 	?", login).First(&user).Error
+	err := dbStorage.db.WithContext(ctx).Where("login  = 	?", login).First(&user).Error
 	if err != nil {
 		return 0, err
 	}
@@ -136,9 +136,9 @@ func (dbStorage DBStorage) GetBalanceByLogin(login string) (float32, error) {
 	return user.Balance, nil
 }
 
-func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
+func (dbStorage DBStorage) GetWithdrawnAmount(login string, ctx context.Context) (float32, error) {
 	var withdrawals []service.Withdrawal
-	err := dbStorage.db.Where("login  = 	?", login).Find(&withdrawals).Error
+	err := dbStorage.db.WithContext(ctx).Where("login  = 	?", login).Find(&withdrawals).Error
 	if err != nil {
 		return 0, err
 	}
@@ -151,26 +151,26 @@ func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
 	return withdrawn, nil
 }
 
-func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal) error {
+func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal, ctx context.Context) error {
 	withdrawal.ProcessedAt = time.Now()
-	err := dbStorage.db.Save(&withdrawal).Where("order = ?", withdrawal.OrderID).Error
+	err := dbStorage.db.WithContext(ctx).Save(&withdrawal).Where("order = ?", withdrawal.OrderID).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (dbStorage DBStorage) SetBalanceByLogin(login string, newBalance float32) error {
-	err := dbStorage.db.Model(&service.User{}).Where("login = ?", login).Update("balance", newBalance).Error
+func (dbStorage DBStorage) SetBalanceByLogin(login string, newBalance float32, ctx context.Context) error {
+	err := dbStorage.db.WithContext(ctx).Model(&service.User{}).Where("login = ?", login).Update("balance", newBalance).Error
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (dbStorage DBStorage) GetWithdrawals(login string) ([]service.Withdrawal, error) {
+func (dbStorage DBStorage) GetWithdrawals(login string, ctx context.Context) ([]service.Withdrawal, error) {
 	var withdrawals []service.Withdrawal
-	err := dbStorage.db.Where("login  = 	?", login).Order("processed_at asc").Find(&withdrawals).Error
+	err := dbStorage.db.WithContext(ctx).Where("login  = 	?", login).Order("processed_at asc").Find(&withdrawals).Error
 	if len(withdrawals) == 0 {
 		return nil, ErrWithdrawListEmpty
 	}
@@ -181,7 +181,7 @@ func (dbStorage DBStorage) GetWithdrawals(login string) ([]service.Withdrawal, e
 	return withdrawals, nil
 }
 
-func (dbStorage DBStorage) DeleteAll() {
-	dbStorage.db.Exec("DELETE FROM users")
-	dbStorage.db.Exec("DELETE FROM orders")
+func (dbStorage DBStorage) DeleteAll(ctx context.Context) {
+	dbStorage.db.WithContext(ctx).Exec("DELETE FROM users")
+	dbStorage.db.WithContext(ctx).Exec("DELETE FROM orders")
 }
