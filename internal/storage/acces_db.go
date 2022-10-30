@@ -1,10 +1,8 @@
 package storage
 
 import (
-	"context"
 	"errors"
 	"fmt"
-
 	"gophermart/internal/service"
 	"gorm.io/gorm"
 	"time"
@@ -49,7 +47,7 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 	return nil
 }
 
-func (dbStorage DBStorage) PutOrder(order service.Order, ctx context.Context) error {
+func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	var checkingOrder service.Order
 
 	err := dbStorage.db.Where("login  = 	?  AND number = ?", order.Login, order.Number).First(&checkingOrder).Error
@@ -112,56 +110,6 @@ func (dbStorage DBStorage) UpdateOrderStatus(order service.Order) error {
 	}
 	return nil
 }
-
-//
-//func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
-//	var ordersToUpdate []service.Order
-//	dbStorage.db.Where("status = ?", NEW).Or("status = ?", REGISTERED).
-//		Or("status = ?", PROCESSING).Find(&ordersToUpdate)
-//
-//	if len(ordersToUpdate) != 0 {
-//		req := resty.New().
-//			SetBaseURL(accrualAddr).
-//			R().
-//			SetHeader("Content-Type", "application/json")
-//		for _, order := range ordersToUpdate {
-//
-//			orderNum := order.Number
-//			resp, err := req.Get("/api/orders/" + orderNum)
-//			if err != nil {
-//				return err
-//			}
-//
-//			status := resp.StatusCode()
-//			switch status {
-//			case http.StatusTooManyRequests:
-//				time.Sleep(10 * time.Second)
-//				return nil
-//
-//			case http.StatusOK:
-//				var updatedOrder service.AccrualResponse
-//				err = json.Unmarshal(resp.Body(), &updatedOrder)
-//				if err != nil {
-//					log.Printf("json decode order accrual: %s", err)
-//					return err
-//				}
-//				log.Printf("accrual for order %s updating to %s", updatedOrder.OrderID, updatedOrder.Status)
-//
-//				dbStorage.db.Model(&service.Order{}).Where("number = ?", updatedOrder.OrderID).
-//					Updates(service.Order{Status: updatedOrder.Status, Accrual: updatedOrder.Accrual})
-//
-//				var user service.User
-//				dbStorage.db.Where("login  = 	?", order.Login).First(&user)
-//				user.Balance = user.Balance + updatedOrder.Accrual
-//				err := dbStorage.db.Save(&user).Error
-//				if err != nil {
-//					return err
-//				}
-//			}
-//		}
-//	}
-//	return nil
-//}
 
 func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, error) {
 	var orders []service.Order

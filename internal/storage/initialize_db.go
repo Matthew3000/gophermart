@@ -1,9 +1,9 @@
 package storage
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"gophermart/internal/service"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
 )
 
@@ -12,11 +12,14 @@ type DBStorage struct {
 }
 
 func NewUserStorage(DatabaseURL string) *DBStorage {
-	connection, err := gorm.Open("postgres", DatabaseURL)
+	connection, err := gorm.Open(postgres.Open(DatabaseURL), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("database failed to open: %s", err)
 	}
-	sqlDB := connection.DB()
+	sqlDB, err := connection.DB()
+	if err != nil {
+		log.Fatalf("database failed to connect: %s", err)
+	}
 
 	err = sqlDB.Ping()
 	if err != nil {
@@ -32,7 +35,16 @@ func NewUserStorage(DatabaseURL string) *DBStorage {
 }
 
 func InitializeTables(connection *gorm.DB) {
-	connection.AutoMigrate(service.User{})
-	connection.AutoMigrate(service.Order{})
-	connection.AutoMigrate(service.Withdrawal{})
+	err := connection.AutoMigrate(service.User{})
+	if err != nil {
+		log.Fatalf("database failed to create user table: %s", err)
+	}
+	err = connection.AutoMigrate(service.Order{})
+	if err != nil {
+		log.Fatalf("database failed to create order table: %s", err)
+	}
+	err = connection.AutoMigrate(service.Withdrawal{})
+	if err != nil {
+		log.Fatalf("database failed to create withdrawal table: %s", err)
+	}
 }

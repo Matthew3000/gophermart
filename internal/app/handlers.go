@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 /*
@@ -35,9 +33,9 @@ func (app *App) IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		r = r.WithContext(ctx)
+		//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		//defer cancel()
+		//r = r.WithContext(ctx)
 
 		http.Redirect(w, r, "/login", http.StatusUnauthorized)
 	}
@@ -58,10 +56,9 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, storage.ErrUserExists) {
 			http.Error(w, fmt.Sprintf("register error: %s", err), http.StatusConflict)
 			return
-		} else {
-			http.Error(w, fmt.Sprintf("register error: %s", err), http.StatusInternalServerError)
-			return
 		}
+		http.Error(w, fmt.Sprintf("register error: %s", err), http.StatusInternalServerError)
+		return
 	}
 
 	var authDetails service.Authentication
@@ -73,10 +70,9 @@ func (app *App) handleRegister(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, storage.ErrInvalidCredentials) {
 			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusUnauthorized)
 			return
-		} else {
-			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusInternalServerError)
-			return
 		}
+		http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusInternalServerError)
+		return
 	}
 
 	session, _ := app.cookieStorage.Get(r, "session.id")
@@ -101,10 +97,9 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, storage.ErrInvalidCredentials) {
 			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusUnauthorized)
 			return
-		} else {
-			http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusInternalServerError)
-			return
 		}
+		http.Error(w, fmt.Sprintf("auth error: %s", err), http.StatusInternalServerError)
+		return
 	}
 
 	session, _ := app.cookieStorage.Get(r, "session.id")
@@ -135,7 +130,8 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	order.Login = session.Values["login"].(string)
-	err = app.userStorage.PutOrder(order, r.Context())
+	//err = app.userStorage.PutOrder(order, r.Context())
+	err = app.userStorage.PutOrder(order)
 	if err != nil {
 		log.Printf("upload order: %s for user: %s, number: %s", err, order.Login, order.Number)
 		if errors.Is(err, storage.ErrAlreadyExists) {
@@ -242,7 +238,6 @@ func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) handleWithdrawInfo(w http.ResponseWriter, r *http.Request) {
-
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	login := session.Values["login"].(string)
 

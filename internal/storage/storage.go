@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"errors"
 	"gophermart/internal/service"
 	"time"
@@ -10,7 +9,8 @@ import (
 type UserStorage interface {
 	CheckUserAuth(authDetails service.Authentication) error
 	RegisterUser(user service.User) error
-	PutOrder(order service.Order, ctx context.Context) error
+	//PutOrder(order service.Order, ctx context.Context) error
+	PutOrder(order service.Order) error
 	GetOrdersByLogin(login string) ([]service.Order, error)
 	GetBalanceByLogin(login string) (float32, error)
 	GetWithdrawnAmount(login string) (float32, error)
