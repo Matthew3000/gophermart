@@ -152,7 +152,7 @@ func (dbStorage DBStorage) GetWithdrawnAmount(login string) (float32, error) {
 
 func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal) error {
 	withdrawal.ProcessedAt = time.Now()
-	err := dbStorage.db.Save(&withdrawal).Error
+	err := dbStorage.db.Save(&withdrawal).Where("order = ?", withdrawal.OrderID).Error
 	if err != nil {
 		return err
 	}
