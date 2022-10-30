@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 /*
@@ -32,10 +34,6 @@ func (app *App) IsAuthorized(handler http.HandlerFunc) http.HandlerFunc {
 			handler.ServeHTTP(w, r)
 			return
 		}
-
-		//ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		//defer cancel()
-		//r = r.WithContext(ctx)
 
 		http.Redirect(w, r, "/login", http.StatusUnauthorized)
 	}
@@ -110,6 +108,10 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	r = r.WithContext(ctx)
+
 	value, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("upload order: json parse error: %s", err)
@@ -130,8 +132,7 @@ func (app *App) handleUploadOrder(w http.ResponseWriter, r *http.Request) {
 
 	session, _ := app.cookieStorage.Get(r, "session.id")
 	order.Login = session.Values["login"].(string)
-	//err = app.userStorage.PutOrder(order, r.Context())
-	err = app.userStorage.PutOrder(order)
+	err = app.userStorage.PutOrder(order, r.Context())
 	if err != nil {
 		log.Printf("upload order: %s for user: %s, number: %s", err, order.Login, order.Number)
 		if errors.Is(err, storage.ErrAlreadyExists) {

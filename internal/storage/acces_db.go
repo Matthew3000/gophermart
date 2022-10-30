@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"gophermart/internal/service"
@@ -47,10 +48,10 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 	return nil
 }
 
-func (dbStorage DBStorage) PutOrder(order service.Order) error {
+func (dbStorage DBStorage) PutOrder(order service.Order, ctx context.Context) error {
 	var checkingOrder service.Order
 
-	err := dbStorage.db.Where("login  = 	?  AND number = ?", order.Login, order.Number).First(&checkingOrder).Error
+	err := dbStorage.db.WithContext(ctx).Where("login  = 	?  AND number = ?", order.Login, order.Number).First(&checkingOrder).Error
 	if checkingOrder.Login != "" {
 		return ErrAlreadyExists
 	}
@@ -60,7 +61,7 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 		}
 	}
 
-	err = dbStorage.db.Where("number = ?", order.Number).First(&checkingOrder).Error
+	err = dbStorage.db.WithContext(ctx).Where("number = ?", order.Number).First(&checkingOrder).Error
 	if checkingOrder.Login != "" {
 		return ErrUploadedByAnotherUser
 	}
@@ -72,11 +73,11 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 
 	order.Status = NEW
 	order.UploadedAt = time.Now()
-	err = dbStorage.db.Create(&order).Error
+	err = dbStorage.db.WithContext(ctx).Create(&order).Error
 	if err != nil {
 		return err
 	}
-	//dbStorage.db.WithContext(ctx).Create(&order)
+
 	return nil
 }
 
