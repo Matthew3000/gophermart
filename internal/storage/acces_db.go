@@ -2,8 +2,10 @@ package storage
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-resty/resty/v2"
+	"github.com/jinzhu/gorm"
 	"gophermart/internal/service"
 	"log"
 	"net/http"
@@ -12,30 +14,35 @@ import (
 
 func (dbStorage DBStorage) RegisterUser(user service.User) error {
 	var dbUser service.User
-	dbStorage.db.Where("login = ?", user.Login).First(&dbUser)
-
-	//check if email is already registered
-	if dbUser.Login != "" {
-		return ErrUserExists
-	}
-
-	hashedPassword, err := service.GeneratePasswordHash(user.Password)
+	err := dbStorage.db.Where("login = ?", user.Login).First(&dbUser).Error
 	if err != nil {
-		return fmt.Errorf("error in password hashing: %s", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			hashedPassword, err := service.GeneratePasswordHash(user.Password)
+			if err != nil {
+				return fmt.Errorf("error in password hashing: %s", err)
+			}
+			user.Password = hashedPassword
+			user.Balance = 0
+			err = dbStorage.db.Create(&user).Error
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
 	}
-	user.Password = hashedPassword
-	user.Balance = 0
-	dbStorage.db.Create(&user)
-
-	return nil
+	return ErrUserExists
 }
 
 func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) error {
 	var authUser service.User
 
-	dbStorage.db.Where("login  = 	?", authDetails.Login).First(&authUser)
-	if authUser.Login == "" {
-		return ErrInvalidCredentials
+	err := dbStorage.db.Where("login  = 	?", authDetails.Login).First(&authUser).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrInvalidCredentials
+		}
+		return err
 	}
 
 	if !service.CheckPasswordHash(authDetails.Password, authUser.Password) {
@@ -47,17 +54,27 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication) err
 func (dbStorage DBStorage) PutOrder(order service.Order) error {
 	var checkingOrder service.Order
 
-	dbStorage.db.Where("login  = 	?  AND number = ?", order.Login, order.Number).First(&checkingOrder)
+	err := dbStorage.db.Where("login  = 	?  AND number = ?", order.Login, order.Number).First(&checkingOrder).Error
 	if checkingOrder.Login != "" {
 		return ErrAlreadyExists
 	}
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+	}
 
-	dbStorage.db.Where("number = ?", order.Number).First(&checkingOrder)
+	err = dbStorage.db.Where("number = ?", order.Number).First(&checkingOrder).Error
 	if checkingOrder.Login != "" {
 		return ErrUploadedByAnotherUser
 	}
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+	}
 
-	order.Status = "NEW"
+	order.Status = NEW
 	order.UploadedAt = time.Now()
 	dbStorage.db.Create(&order)
 	return nil
@@ -65,8 +82,8 @@ func (dbStorage DBStorage) PutOrder(order service.Order) error {
 
 func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 	var ordersToUpdate []service.Order
-	dbStorage.db.Where("status = ?", "NEW").Or("status = ?", "REGISTERED").
-		Or("status = ?", "PROCESSING").Find(&ordersToUpdate)
+	dbStorage.db.Where("status = ?", NEW).Or("status = ?", REGISTERED).
+		Or("status = ?", PROCESSING).Find(&ordersToUpdate)
 
 	if len(ordersToUpdate) != 0 {
 		req := resty.New().
@@ -115,9 +132,12 @@ func (dbStorage DBStorage) UpdateAccrual(accrualAddr string) error {
 func (dbStorage DBStorage) GetOrdersByLogin(login string) ([]service.Order, error) {
 	var orders []service.Order
 
-	dbStorage.db.Where("login  = 	?", login).Order("uploaded_at asc").Find(&orders)
+	err := dbStorage.db.Where("login  = 	?", login).Order("uploaded_at asc").Find(&orders).Error
 	if len(orders) == 0 {
 		return nil, ErrOrderListEmpty
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return orders, nil
@@ -168,12 +188,17 @@ func (dbStorage DBStorage) SetBalanceByLogin(login string, newBalance float32) e
 func (dbStorage DBStorage) GetWithdrawals(login string) ([]service.Withdrawal, error) {
 	var withdrawals []service.Withdrawal
 	err := dbStorage.db.Where("login  = 	?", login).Order("processed_at asc").Find(&withdrawals).Error
-	if err != nil {
-		return nil, err
-	}
 	if len(withdrawals) == 0 {
 		return nil, ErrWithdrawListEmpty
 	}
+	if err != nil {
+		return nil, err
+	}
 
 	return withdrawals, nil
+}
+
+func (dbStorage DBStorage) DeleteAll() {
+	dbStorage.db.Exec("DELETE FROM users")
+	dbStorage.db.Exec("DELETE FROM orders")
 }

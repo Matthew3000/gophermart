@@ -16,6 +16,7 @@ type UserStorage interface {
 	Withdraw(withdrawal service.Withdrawal) error
 	SetBalanceByLogin(login string, newBalance float32) error
 	GetWithdrawals(login string) ([]service.Withdrawal, error)
+	DeleteAll()
 }
 
 var (
@@ -25,4 +26,10 @@ var (
 	ErrUploadedByAnotherUser = errors.New("this order is uploaded by another user")
 	ErrOrderListEmpty        = errors.New("order list is empty")
 	ErrWithdrawListEmpty     = errors.New("withdraw list is empty")
+)
+
+const (
+	NEW        = "NEW"
+	REGISTERED = "REGISTERED"
+	PROCESSING = "PROCESSING"
 )
