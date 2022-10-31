@@ -18,7 +18,7 @@ type UserStorage interface {
 	GetWithdrawals(login string, ctx context.Context) ([]service.Withdrawal, error)
 	GetOrdersToUpdate() ([]service.Order, error)
 	UpdateOrderStatus(order service.Order) error
-	DeleteAll(ctx context.Context)
+	DeleteAll()
 }
 
 var (

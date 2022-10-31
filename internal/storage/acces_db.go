@@ -204,7 +204,7 @@ func (dbStorage DBStorage) GetWithdrawals(login string, ctx context.Context) ([]
 	return withdrawals, nil
 }
 
-func (dbStorage DBStorage) DeleteAll(ctx context.Context) {
-	dbStorage.db.WithContext(ctx).Exec("DELETE FROM users")
-	dbStorage.db.WithContext(ctx).Exec("DELETE FROM orders")
+func (dbStorage DBStorage) DeleteAll() {
+	dbStorage.db.Exec("DELETE FROM users")
+	dbStorage.db.Exec("DELETE FROM orders")
 }
