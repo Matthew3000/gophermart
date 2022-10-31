@@ -81,9 +81,9 @@ func (dbStorage DBStorage) PutOrder(order service.Order, ctx context.Context) er
 	return nil
 }
 
-func (dbStorage DBStorage) GetOrdersToUpdate(ctx context.Context) ([]service.Order, error) {
+func (dbStorage DBStorage) GetOrdersToUpdate() ([]service.Order, error) {
 	var ordersToUpdate []service.Order
-	err := dbStorage.db.WithContext(ctx).Where("status = ?", NEW).Or("status = ?", REGISTERED).
+	err := dbStorage.db.Where("status = ?", NEW).Or("status = ?", REGISTERED).
 		Or("status = ?", PROCESSING).Find(&ordersToUpdate).Error
 	if err != nil {
 		return nil, err
@@ -91,21 +91,21 @@ func (dbStorage DBStorage) GetOrdersToUpdate(ctx context.Context) ([]service.Ord
 	return ordersToUpdate, nil
 }
 
-func (dbStorage DBStorage) UpdateOrderStatus(order service.Order, ctx context.Context) error {
-	err := dbStorage.db.WithContext(ctx).Model(&service.Order{}).Where("number = ?", order.Number).
+func (dbStorage DBStorage) UpdateOrderStatus(order service.Order) error {
+	err := dbStorage.db.Model(&service.Order{}).Where("number = ?", order.Number).
 		Updates(service.Order{Status: order.Status, Accrual: order.Accrual}).Error
 	if err != nil {
 		return err
 	}
 
 	var user service.User
-	err = dbStorage.db.WithContext(ctx).Where("login  = 	?", order.Login).First(&user).Error
+	err = dbStorage.db.Where("login  = 	?", order.Login).First(&user).Error
 	if err != nil {
 		return err
 	}
 
 	user.Balance = user.Balance + order.Accrual
-	err = dbStorage.db.WithContext(ctx).Save(&user).Error
+	err = dbStorage.db.Save(&user).Error
 	if err != nil {
 		return err
 	}

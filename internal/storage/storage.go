@@ -17,8 +17,8 @@ type UserStorage interface {
 	Withdraw(withdrawal service.Withdrawal, ctx context.Context) error
 	SetBalanceByLogin(login string, newBalance float32, ctx context.Context) error
 	GetWithdrawals(login string, ctx context.Context) ([]service.Withdrawal, error)
-	GetOrdersToUpdate(ctx context.Context) ([]service.Order, error)
-	UpdateOrderStatus(order service.Order, ctx context.Context) error
+	GetOrdersToUpdate() ([]service.Order, error)
+	UpdateOrderStatus(order service.Order) error
 	DeleteAll(ctx context.Context)
 }
 
