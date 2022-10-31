@@ -132,8 +132,31 @@ func (dbStorage DBStorage) GetBalanceByLogin(login string, ctx context.Context) 
 	if err != nil {
 		return 0, err
 	}
-
 	return user.Balance, nil
+}
+
+func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal, ctx context.Context) error {
+	var user service.User
+	err := dbStorage.db.WithContext(ctx).Where("login  = 	?", withdrawal.Login).First(&user).Error
+	if err != nil {
+		return err
+	}
+
+	newBalance := user.Balance - withdrawal.Amount
+	if newBalance >= 0 {
+		withdrawal.ProcessedAt = time.Now()
+		err = dbStorage.db.WithContext(ctx).Save(&withdrawal).Where("order = ?", withdrawal.OrderID).Error
+		if err != nil {
+			return err
+		}
+		err = dbStorage.db.WithContext(ctx).Model(&service.User{}).
+			Where("login = ?", withdrawal.Login).Update("balance", newBalance).Error
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return ErrNotEnoughPoints
 }
 
 func (dbStorage DBStorage) GetWithdrawnAmount(login string, ctx context.Context) (float32, error) {
@@ -149,23 +172,6 @@ func (dbStorage DBStorage) GetWithdrawnAmount(login string, ctx context.Context)
 	}
 
 	return withdrawn, nil
-}
-
-func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal, ctx context.Context) error {
-	withdrawal.ProcessedAt = time.Now()
-	err := dbStorage.db.WithContext(ctx).Save(&withdrawal).Where("order = ?", withdrawal.OrderID).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (dbStorage DBStorage) SetBalanceByLogin(login string, newBalance float32, ctx context.Context) error {
-	err := dbStorage.db.WithContext(ctx).Model(&service.User{}).Where("login = ?", login).Update("balance", newBalance).Error
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (dbStorage DBStorage) GetWithdrawals(login string, ctx context.Context) ([]service.Withdrawal, error) {

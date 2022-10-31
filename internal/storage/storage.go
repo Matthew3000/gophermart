@@ -15,7 +15,6 @@ type UserStorage interface {
 	GetBalanceByLogin(login string, ctx context.Context) (float32, error)
 	GetWithdrawnAmount(login string, ctx context.Context) (float32, error)
 	Withdraw(withdrawal service.Withdrawal, ctx context.Context) error
-	SetBalanceByLogin(login string, newBalance float32, ctx context.Context) error
 	GetWithdrawals(login string, ctx context.Context) ([]service.Withdrawal, error)
 	GetOrdersToUpdate() ([]service.Order, error)
 	UpdateOrderStatus(order service.Order) error
@@ -29,6 +28,7 @@ var (
 	ErrUploadedByAnotherUser = errors.New("this order is uploaded by another user")
 	ErrOrderListEmpty        = errors.New("order list is empty")
 	ErrWithdrawListEmpty     = errors.New("withdraw list is empty")
+	ErrNotEnoughPoints       = errors.New("not enough accural points")
 )
 
 const (

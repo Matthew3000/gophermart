@@ -215,32 +215,15 @@ func (app *App) handleWithdraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentBalance, err := app.userStorage.GetBalanceByLogin(withdrawal.Login, r.Context())
+	err = app.userStorage.Withdraw(withdrawal, r.Context())
 	if err != nil {
+		log.Printf("withdraw: read request body: %s for user: %s amount: %f order: %s",
+			err, withdrawal.Login, withdrawal.Amount, withdrawal.OrderID)
+		if errors.Is(err, storage.ErrNotEnoughPoints) {
+			w.WriteHeader(http.StatusPaymentRequired)
+			return
+		}
 		http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-		return
-	}
-
-	newBalance := currentBalance - withdrawal.Amount
-	if newBalance >= 0 {
-		err = app.userStorage.Withdraw(withdrawal, r.Context())
-		if err != nil {
-			log.Printf("withdraw: read request body: %s for user: %s amount: %f order: %s",
-				err, withdrawal.Login, withdrawal.Amount, withdrawal.OrderID)
-			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-			return
-		}
-
-		err = app.userStorage.SetBalanceByLogin(withdrawal.Login, newBalance, r.Context())
-		if err != nil {
-			log.Printf("withdraw: read request body: %s for user: %s balance: %f order: %s",
-				err, withdrawal.Login, newBalance, withdrawal.OrderID)
-			http.Error(w, fmt.Sprint(err), http.StatusInternalServerError)
-			return
-		}
-	} else {
-		w.WriteHeader(http.StatusPaymentRequired)
-		return
 	}
 }
 
