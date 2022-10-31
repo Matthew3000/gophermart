@@ -137,25 +137,42 @@ func (dbStorage DBStorage) GetBalanceByLogin(login string, ctx context.Context) 
 
 func (dbStorage DBStorage) Withdraw(withdrawal service.Withdrawal, ctx context.Context) error {
 	var user service.User
-	err := dbStorage.db.WithContext(ctx).Where("login  = 	?", withdrawal.Login).First(&user).Error
+
+	tx := dbStorage.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	err := tx.WithContext(ctx).Where("login  = 	?", withdrawal.Login).First(&user).Error
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 
 	newBalance := user.Balance - withdrawal.Amount
 	if newBalance >= 0 {
 		withdrawal.ProcessedAt = time.Now()
-		err = dbStorage.db.WithContext(ctx).Save(&withdrawal).Where("order = ?", withdrawal.OrderID).Error
+		err = tx.WithContext(ctx).Save(&withdrawal).Where("order = ?", withdrawal.OrderID).Error
 		if err != nil {
+			tx.Rollback()
 			return err
 		}
-		err = dbStorage.db.WithContext(ctx).Model(&service.User{}).
+		err = tx.WithContext(ctx).Model(&service.User{}).
 			Where("login = ?", withdrawal.Login).Update("balance", newBalance).Error
 		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		err = tx.Commit().Error
+		if err != nil {
+			tx.Rollback()
 			return err
 		}
 		return nil
 	}
+	tx.Rollback()
 	return ErrNotEnoughPoints
 }
 
