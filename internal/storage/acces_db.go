@@ -51,7 +51,7 @@ func (dbStorage DBStorage) CheckUserAuth(authDetails service.Authentication, ctx
 func (dbStorage DBStorage) PutOrder(order service.Order, ctx context.Context) error {
 	var checkingOrder service.Order
 
-	err := dbStorage.db.WithContext(ctx).Where("login  = 	?  AND number = ?", order.Login, order.Number).First(&checkingOrder).Error
+	err := dbStorage.db.WithContext(ctx).Where("login  = 	?  AND nuumber = ?", order.Login, order.Number).First(&checkingOrder).Error
 	if checkingOrder.Login != "" {
 		return ErrAlreadyExists
 	}
